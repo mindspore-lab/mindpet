@@ -70,7 +70,7 @@ def convert_nodes_devices_input(var: Union[List, Tuple, Dict[str, int], None], n
 
 def create_dirs(path, mode=0o750):
     """递归创建文件夹"""
-    p_path = os.path.join(path, "..")
+    p_path = os.path.join(path, "../..")
     abspath = os.path.abspath(p_path)
     if not os.path.exists(abspath):
         os.makedirs(abspath, mode, exist_ok=True)

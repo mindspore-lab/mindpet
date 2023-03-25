@@ -132,23 +132,20 @@ shard(strategy_org_dense_matmul=None,
 
 通过以下步骤将模型结构中的线性层修改为带有LoRA结构的线性层，冻结网络进行训练：
 
-1）从`tk.delta`中导入`LoRADense`方法，从`tk.graph`中导入`freeze_delta`方法。（[冻结方法参考《TK_GraphOperation_README.md》第一章](./TK_GraphOperation_README.md)）
+1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）将attention结构中原query、value层的`nn.Dense`函数替换为`LoRADense`，原线性层参数无需任何修改，需新增`lora_rank`与`lora_alpha`两个必选参数，其余参数可参考API接口自行指定。
 
 3）如果进行分布式训练，需调用shard方法指定分布式策略。
 
-4）在模型定义优化器之前调用`freeze_delta`方法冻结除LoRA矩阵外其他权重。需注意在微调预训练模型时，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。
+4）在模型定义优化器之前调用`freeze_delta`方法冻结除LoRA矩阵外其他权重。需注意在微调预训练模型时，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
-5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](./TK_GraphOperation_README.md)）
+5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
 
 6）评估方法参考附录A
 
 ```python
-import mindspore.nn as nn
 from tk.delta import LoRADense
-from tk.graph import freeze_delta
-from tk.graph import TrainableParamsCheckPoint
 
 # original Dense Layer
 # dense1 = nn.Dense(in_channels=1*28*28, out_channels=512,...)
@@ -164,6 +161,11 @@ dense1.shard(strategy_org_dense_matmul=((2, 1), (4, 1)),
              strategy_lora_mul=((2, 4), ()), 
              strategy_lora_add=((2, 4), (2, 4)),
              strategy_activation=((2, 4), (2, 4))
+```
+
+```python
+from tk.graph import freeze_delta
+from tk.graph import TrainableParamsCheckPoint
 
 # freeze all cells except LoRA and head
 freeze_delta(model=network, mode='lora', exclude=['*head*'])
@@ -176,7 +178,6 @@ ckpt_callback = TrainableParamsCheckPoint(...)
 
 # 加入callback list
 callbacks.append(ckpt_callback)
-
 ```
 
 
@@ -292,7 +293,7 @@ Prefix算法原理图: 对于每个下游任务，添加一份和当前任务相
 
 通过以下步骤将模型结构中`key`、`value`和`attention_mask`修改为新的`key`、`value`和`attention_mask`，冻结网络进行训练：
 
-1）从`tk.delta`中导入`PrefixLayer`方法，从`tk.graph`中导入`freeze_delta`方法。（[冻结方法参考《TK_GraphOperation_README.md》第一章](./TK_GraphOperation_README.md)）
+1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）定义`PrefixLayer`对象，将`PrefixLayer`对象中的`past_key_reparam`、`past_value_reparam`矩阵与原`key`、`value`矩阵进行`concat`操作。
 
@@ -300,7 +301,7 @@ Prefix算法原理图: 对于每个下游任务，添加一份和当前任务相
 
 4）在模型定义优化器之前调用`freeze_delta`方法冻结除`Prefix`矩阵外其他权重。注意，预训练模型微调时，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。
 
-5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](./TK_GraphOperation_README.md)）
+5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
 
 6）评估方法参考附录A
 
@@ -310,11 +311,8 @@ import numpy
 import mindspore.nn as nn
 
 from mindspore.common.tensor import Tensor
-# 第一步 导入PrefixLayer和freeze_delta方法
+# 第一步 导入PrefixLayer
 from tk.delta.prefix_layer import PrefixLayer
-from tk.graph.freeze_utils import freeze_delta
-from tk.graph import TrainableParamsCheckPoint
-
 
 #模型的Attention层
 class MaskSelfAttention(nn.Cell):
@@ -348,7 +346,12 @@ class MaskSelfAttention(nn.Cell):
         # 第三步 将attention_mask矩阵与help连接(新的attention_mask矩阵shape与新的query*key矩阵的shape相同)
         attention_mask = mindspore.ops.concat((attention_mask, self.help_matrix), 1)
         attention_mask = mindspore.ops.concat((attention_mask, self.help), -1)
+```
 
+```python
+
+from tk.graph.freeze_utils import freeze_delta
+from tk.graph import TrainableParamsCheckPoint
 
 # 下游任务微调脚本
 def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="", epoch_num=1):
@@ -365,7 +368,6 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     # 加入callback list
     callbacks.append(ckpt_callback)
 ```
-
 
 
 ### 2.4 实验效果
@@ -638,23 +640,20 @@ shard(strategy_matmul_down_sampler=None,
 
 通过以下步骤将模型结构中的线性层修改为带有Adapter结构的线性层：
 
-1）从`tk.delta`中导入`AdapterDense`方法，从`tk.graph`中导入`freeze_delta`方法。
+1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）将原有`nn.Dense`函数替换为`AdapterDense`，原线性层参数无需任何修改。根据实际需要，配置`bottleneck_size`参数的大小。
 
 3）如果进行分布式训练，需调用shard方法指定分布式策略。
 
-4）在模型定义优化器之前使用`freeze_delta`方法冻结除Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](./TK_GraphOperation_README.md)）
+4）在模型定义优化器之前使用`freeze_delta`方法冻结除Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
-5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](./TK_GraphOperation_README.md)）
+5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
 
 6）评估方法参考附录A
 
 ```python
-import mindspore.nn as nn
 from tk.delta import AdapterDense
-from tk.graph import freeze_delta
-from tk.graph import TrainableParamsCheckPoint
 
 # original Dense Layer
 # dense1 = nn.Dense(in_channels=1*28*28, out_channels=512,...)
@@ -673,6 +672,13 @@ dense1.shard(strategy_matmul_org=((2, 4), (1, 4)),
              strategy_bias_up_sampler=((2, 1), (1,)),
              strategy_residential_add=((2, 1), (2, 1)))
 
+
+```
+
+```python
+from tk.graph import freeze_delta
+from tk.graph import TrainableParamsCheckPoint
+
 # freeze all cell except Adapter
 freeze_delta(model=network, mode='adapter', exclude=['*head*'])
 
@@ -688,12 +694,11 @@ callbacks.append(ckpt_callback)
 ```
 
 
-
 #### AdapterLayer
 
 通过以下步骤在模型结构中的线性层之后插入AdapterLayer层：
 
-1）从`tk.delta`中导入`AdapterLayer`方法，从`tk.graph`中导入`freeze_delta`方法。
+1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）在原有`nn.Dense`层之后插入`AdapterLayer`，原线性层参数无需任何修改。根据实际需要，配置`bottleneck_size`参数的大小。
 
@@ -701,14 +706,13 @@ callbacks.append(ckpt_callback)
 
 4）如果进行分布式训练，需调用shard方法指定分布式策略。
 
-5）在模型定义优化器之前使用`freeze_delta`方法冻结除Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](./TK_GraphOperation_README.md)）
+5）在模型定义优化器之前使用`freeze_delta`方法冻结除Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
-6）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](./TK_GraphOperation_README.md)）
+6）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
 
 ```python
 import mindspore.nn as nn
 from tk.delta import AdapterLayer
-from tk.graph import freeze_delta
  
 # original Dense Layer
 dense = nn.Dense(in_channels=1*28*28, out_channels=512,...)
@@ -729,6 +733,11 @@ adapter_layer.shard(strategy_matmul_down_sampler=((2, 1), (1, 1)),
 # in model construct method
 dense_output = dense(input_tensor)
 adapter_layer_output = adapter_layer(dense_output)
+
+```
+
+```python
+from tk.graph import freeze_delta
 
 # freeze all cell except Adapter
 freeze_delta(model=network, mode='adapter', exclude=['*head*'])
@@ -1061,23 +1070,21 @@ shard(strategy_matmul_down_sampler_weight=None,
 
 通过以下步骤将模型结构中的线性层修改为带有Low-Rank Adapter结构的线性层：
 
-1）从`tk.delta`中导入`LowRankAdapterDense`方法，从`tk.graph`中导入`freeze_delta`方法。
+1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）将原有`nn.Dense`函数替换为`LowRankAdapterDense`，原线性层参数无需任何修改。根据实际需要，配置 `reduction_factor`等新增参数的值。
 
 3）如果进行分布式训练，需调用shard方法指定分布式策略。
 
-4）在模型定义优化器之前使用`freeze_delta`方法冻结除Low-Rank Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](./TK_GraphOperation_README.md)）
+4）在模型定义优化器之前使用`freeze_delta`方法冻结除Low-Rank Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
-5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](./TK_GraphOperation_README.md)）
+5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
 
 6）评估方法参考附录A
 
 ```python
 import mindspore.nn as nn
 from tk.delta import LowRankAdapterDense
-from tk.graph import freeze_delta
-from tk.graph import TrainableParamsCheckPoint
 
 # original Dense Layer
 # dense1 = nn.Dense(in_channels=1*28*28, out_channels=512,...)
@@ -1097,6 +1104,11 @@ dense1.shard(strategy_matmul_org=((2, 4), (1, 4)),
              strategy_matmul_up_sampler_input=((2, 1), (1, 1)),
              strategy_bias_up_sampler=((2, 1), (1,)),
              strategy_residual_add=((2, 1), (2, 1)))
+```
+
+```python
+from tk.graph import freeze_delta
+from tk.graph import TrainableParamsCheckPoint
 
 # freeze all cell except Low-Rank Adapter
 freeze_delta(model=network, mode='low_rank_adapter', exclude=['*head*'])
@@ -1118,7 +1130,7 @@ callbacks.append(ckpt_callback)
 
 通过以下步骤在模型结构中的线性层之后插入Low-Rank Adapter层：
 
-1）从`tk.delta`中导入`LowRankAdapterLayer`方法，从`tk.graph`中导入`freeze_delta`方法。
+1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）在原有`nn.Dense`层之后插入`LowRankAdapterLayer`，原线性层参数无需任何修改。根据实际需要，配置 `reduction_factor`等参数的值。
 
@@ -1126,15 +1138,13 @@ callbacks.append(ckpt_callback)
 
 4）如果进行分布式训练，需调用shard方法指定分布式策略。
 
-5）在模型定义优化器之前使用`freeze_delta`方法冻结除Low-Rank Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](./TK_GraphOperation_README.md)）
+5）在模型定义优化器之前使用`freeze_delta`方法冻结除Low-Rank Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
-6）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](./TK_GraphOperation_README.md)）
+6）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
 
 ```python
 import mindspore.nn as nn
 from tk.delta import LowRankAdapterLayer
-from tk.graph import freeze_delta
-from tk.graph import TrainableParamsCheckPoint
 
 # original Dense Layer
 dense = nn.Dense(in_channels=1*28*28, out_channels=512,...)
@@ -1157,6 +1167,11 @@ low_rank_adapter_layer.shard(strategy_matmul_down_sampler_weight=((1, 1), (1, 1)
 # in model construct method
 dense_output = dense(input_tensor)
 adapter_layer_output = low_rank_adapter_layer(dense_output)
+```
+
+```python
+from tk.graph import freeze_delta
+from tk.graph import TrainableParamsCheckPoint
 
 # freeze all cell except Low-Rank Adapter
 freeze_delta(model=network, mode='low_rank_adapter', exclude=['*head*'])
@@ -1239,17 +1254,19 @@ BitFit是一种稀疏的微调方法。具体做法是在下游任务微调时�
 freeze_delta(model, mode, include, exclude)
 ```
 
-该函数提供了基本的BitFit算法冻结模式：当参数`mode='bitfit'`时，表明除了带有bias的参数，其余参数全部冻结。具体使用方法可参考[《TK_GraphOperation_README.md》第一章](./TK_GraphOperation_README.md)。
+该函数提供了基本的BitFit算法冻结模式：当参数`mode='bitfit'`时，表明除了带有bias的参数，其余参数全部冻结。具体使用方法可参考[《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)。
 
 
 
 ### 5.3 使用样例
 
-1）在模型定义优化器之前使用`freeze_delta`方法冻结除bias参数外的其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。
+1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
 
-2）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](./TK_GraphOperation_README.md)）
+2）在模型定义优化器之前使用`freeze_delta`方法冻结除bias参数外的其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。
 
-3）评估方法参考附录A
+3）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+
+4）评估方法参考附录A
 
 ```python
 from tk.graph.freeze_utils import freeze_delta
@@ -1319,7 +1336,7 @@ callbacks.append(ckpt_callback)
 ### 6.1 算法介绍
 
 R_Drop算法是一种用于提升精度的微调算法，使用“进行两次dropout”的思想，增加随机扰动，提高模型的精度。
-具体做法为在模型加载完一个batch的数据集之后，对一个batch中的输入数据进行复制，计算出logits并输入到loss计算函数中；在loss计算函数中， 分别计算ce_loss和kl_loss，最终按照loss = ce_loss + kl_loss * alpha 的形式返回loss值（alpha为超参）。
+具体做法为在模型加载完一个batch的数据集之后，对一个batch中的输入数据进行复制，计算出logits并输入到loss计算函数中；在loss计算函数中，分别计算ce_loss和kl_loss，最终按照loss = ce_loss + kl_loss * alpha 的形式返回loss值（alpha为超参）。
 
 实验结果表明，R_Drop算法能够有效提高模型的精度。 
 算法具体细节可参考相关论文[R-Drop: Regularized Dropout for Neural Networks](https://arxiv.org/abs/2106.14448)。
@@ -1359,7 +1376,7 @@ class tk.delta.r_drop.RDropLoss.construct(logits, label_ids, alpha)
 
 通过以下步骤使用R_Drop算法：
 
-1）从`tk.delta`中导入`RDropLoss`, `rdrop_repeat`。
+1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）将模型的`CrossEntropyLoss`替换为`RDropLoss`。
 
@@ -1451,7 +1468,7 @@ class BertClsModel(BaseModel):
 当mindspore版本<=1.9时，分布式微调之后，需要按照以下方案进行评估：
 
 #### 场景一:使用TrainableParamsCheckPoint接口
-参考[《TK_GraphOperation_README.md》第二章](./TK_GraphOperation_README.md)
+参考[《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)
 #### 场景二：未使用TrainableParamsCheckPoint接口
 
 1.使用预训练的分布式策略文件加载预训练参数；

@@ -1,4 +1,4 @@
-# mxTuningKit - delta 轻量化微调算法用户文档
+# MindPet - delta 轻量化微调算法用户文档
 
 
 
@@ -132,7 +132,7 @@ shard(strategy_org_dense_matmul=None,
 
 通过以下步骤将模型结构中的线性层修改为带有LoRA结构的线性层，冻结网络进行训练：
 
-1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）在模型的Attention结构中，从工具包引入`LoRADense`类，并将原query、value层的`nn.Dense`替换为`LoRADense`，无需修改原始参数，需新增`lora_rank`与`lora_alpha`两个必选参数，其余参数可参考API接口自行指定。如果进行分布式训练，可调用`shard`方法指定分布式策略。
 
@@ -295,7 +295,7 @@ Prefix算法原理图: 对于每个下游任务，添加一份和当前任务相
 
 通过以下步骤将模型结构中`key`、`value`和`attention_mask`修改为新的`key`、`value`和`attention_mask`，冻结网络进行训练：
 
-1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）在模型的Attention结构中，从工具包中引入`PrefixLayer`类，创建`prefixlayer`，将`prefixlayer`对象中的`past_key_reparam`、`past_value_reparam`矩阵与原`key`、`value`矩阵进行`concat`操作。然后定义全为1的`help`矩阵，将原`attention_mask`矩阵与`help`矩阵进行`concat`（新的`attention_mask`矩阵shape与新的`query`*`key`矩阵的shape相同）。
 
@@ -644,7 +644,7 @@ shard(strategy_matmul_down_sampler=None,
 
 通过以下步骤将模型结构中的线性层修改为带有Adapter结构的线性层：
 
-1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）在模型的Attention结构中，从工具包中引入`AdapterDense`类，并参照算法原理将原有`nn.Dense`类替换为`AdapterDense`，无需修改原始参数，需新增`bottleneck_size`必选参数，其余参数可参考API接口自行指定。如果进行分布式训练，则调用`shard`方法指定分布式策略。
 
@@ -698,7 +698,7 @@ ckpt_callback = TrainableParamsCheckPoint(...)
 
 通过以下步骤在模型结构中的线性层之后插入AdapterLayer层：
 
-1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）在模型的Attention结构中，从工具包中引入`AdapterDense`类，并参照算法原理在原有`nn.Dense`类后插入`AdapterDense`，无需修改原始参数，需新增`bottleneck_size`必选参数，其余参数可参考API接口自行指定。然后在模型的`construct`方法中，将线性层的输出，作为`AdapterLayer`的输入。如果进行分布式训练，则调用`shard`方法指定分布式策略。
 
@@ -1073,7 +1073,7 @@ shard(strategy_matmul_down_sampler_weight=None,
 
 通过以下步骤将模型结构中的线性层修改为带有Low-Rank Adapter结构的线性层：
 
-1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）在模型的Attention结构中，从工具包中引入`LowRankAdapterDense`类，并参照算法原理将原有`nn.Dense`类替换为`LowRankAdapterDense`，原线性层参数无需任何修改。根据实际需要，配置`reduction_factor`等新增参数的值。如果进行分布式训练，需调用`shard`方法指定分布式策略。
 
@@ -1130,7 +1130,7 @@ ckpt_callback = TrainableParamsCheckPoint(...)
 
 通过以下步骤在模型结构中的线性层之后插入Low-Rank Adapter层：
 
-1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）在模型的Attention结构中，从工具包中引入`LowRankAdapterDense`类，并参照算法原理在原有`nn.Dense`类后插入`LowRankAdapterDense`，原线性层参数无需任何修改。根据实际需要，配置`reduction_factor`等新增参数的值，然后在`construct`方法中，将线性层的输出，作为`LowRankAdapterLayer`的输入。如果进行分布式训练，需调用`shard`方法指定分布式策略。
 
@@ -1262,7 +1262,7 @@ freeze_delta(model, mode, include, exclude)
 
 ### 5.3 使用样例
 
-1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除bias参数外其它原模型权重。注意，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
@@ -1382,7 +1382,7 @@ class tk.delta.r_drop.RDropLoss.construct(logits, label_ids, alpha)
 
 通过以下步骤使用R_Drop算法：
 
-1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
 
 2）在模型主干网络中，从工具包中引入`RDropLoss`类和`drop_repeat`方法，将计算损失函数的`CrossEntropyLoss`类替换为`RDropLoss`。然后在`construct`方法中，调用`rdrop_repeat`复制输入数据。最后调用`RDropLoss`的`construct`方法并指定`alpha`超参（默认为4）。
 

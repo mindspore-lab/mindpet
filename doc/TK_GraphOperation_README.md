@@ -184,13 +184,7 @@ TrainableParamsCheckPoint(directory, prefix, config)
 
 **样例：**
 
-- **在模型微调时**，通过
-
-```python
-from tk.graph import TrainableParamsCheckPoint
-```
-
-引入此模块后，用法与mindspore的ModelCheckpoint一致，实例化此callback后，加入训练时的callback list 即可，例如：
+- **在模型微调时**，从大模型微调工具包中引入`TrainableParamsCheckPoint`类，用法与MindSpore的`ModelCheckpoint`一致，实例化此`callback`后，加入训练时的`callback list`即可，例如：
 
 ```python
 from tk.graph import TrainableParamsCheckPoint
@@ -208,26 +202,34 @@ callbacks.append(params_check_point)
 model.train(callbacks=callbacks)
 ```
 
-- **在模型评估时**，将使用TrainableParamsCheckPoint保存的ckpt加载进网络中，分为单卡和多卡场景。
+- **在模型评估时**，需要按照以下方案加载预训练的ckpt以及微调后生成的ckpt，分为单卡和多卡场景。
 
 **单卡**
+
+示例代码参见如下，其中checkpoint文件、模型实例需要用户根据实际情况进行替换。
 
 ```python
 from mindspore import load_checkpoint, load_param_into_net
 
+## 预训练checkpoint文件
+pre_trained_ckpt_path = xxx
 ## 加载预训练参数
 pre_trained_pramas = load_checkpoint(pre_trained_ckpt_path)
-load_param_into_net(net, pre_trained_pramas)
+load_param_into_net(network=net, pre_trained_pramas)
 
-# 加载需要更新的参数
+## 微调后生成的checkpoint文件
+trainable_ckpt_path = 'xxx'
+## 加载微调更新的参数
 trainable_pramas = load_checkpoint(trainable_ckpt_path)
-load_param_into_net(net, trainable_pramas)
+load_param_into_net(network=net, trainable_pramas)
 
 # 开始评估
 model.eval()
 ```
 
 **多卡**
+
+示例代码参见如下，其中checkpoint文件列表、分布式策略文件路径、模型实例需要用户根据实际情况进行替换。
 
 ```python
 from mindspore import load_distributed_checkpoint
@@ -239,9 +241,9 @@ pre_trained_strategy_path = 'xxxxx'
 load_distributed_checkpoint(network=net, checkpoint_filenames=pre_trained_ckpt_list,
                             train_strategy_filename=pre_trained_strategy_path)
 
-## TrainableParamsCheckPoint保存的ckpt文件列表
+## 微调后生成的checkpoint文件列表
 trainable_ckpt_list = [...]
-## TrainableParamsCheckPoint保存的策略文件
+## 微调后生成的checkpoint文件保存的策略文件
 trainable_strategy_path = 'xxxxx'
 load_distributed_checkpoint(network=net, checkpoint_filenames=trainable_ckpt_list,
                             train_strategy_filename=trainable_strategy_path)

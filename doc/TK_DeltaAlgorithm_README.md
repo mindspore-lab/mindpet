@@ -1,4 +1,4 @@
-# MindPet - delta 轻量化微调算法用户文档
+# mxTuningKit - delta 轻量化微调算法用户文档
 
 
 
@@ -132,17 +132,9 @@ shard(strategy_org_dense_matmul=None,
 
 通过以下步骤将模型结构中的线性层修改为带有LoRA结构的线性层，冻结网络进行训练：
 
-1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
 
-2）将attention结构中原query、value层的`nn.Dense`函数替换为`LoRADense`，原线性层参数无需任何修改，需新增`lora_rank`与`lora_alpha`两个必选参数，其余参数可参考API接口自行指定。
-
-3）如果进行分布式训练，需调用shard方法指定分布式策略。
-
-4）在模型定义优化器之前调用`freeze_delta`方法冻结除LoRA矩阵外其他权重。需注意在微调预训练模型时，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
-
-5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
-
-6）评估方法参考附录A
+2）在模型的Attention结构中，从工具包引入`LoRADense`类，并将原query、value层的`nn.Dense`替换为`LoRADense`，无需修改原始参数，需新增`lora_rank`与`lora_alpha`两个必选参数，其余参数可参考API接口自行指定。如果进行分布式训练，可调用`shard`方法指定分布式策略。
 
 ```python
 from tk.delta import LoRADense
@@ -163,21 +155,27 @@ dense1.shard(strategy_org_dense_matmul=((2, 1), (4, 1)),
              strategy_activation=((2, 4), (2, 4))
 ```
 
-```python
+3）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除`LoRA`矩阵外其它原模型权重。注意，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
+
+```Python
 from tk.graph import freeze_delta
-from tk.graph import TrainableParamsCheckPoint
 
 # freeze all cells except LoRA and head
 freeze_delta(model=network, mode='lora', exclude=['*head*'])
+```
+
+然后从工具包中引入`TrainableParamsCheckPoint`类，将保存ckpt的类改为`TrainableParamsCheckPoint`，仅保存需要更新的参数，可节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+
+由于微调后只保存了部分参数，推理时具体如何加载ckpt请参考[附录A](###A 分布式微调后模型评估方法)。
+
+```python
+from tk.graph import TrainableParamsCheckPoint
 
 # original callback
 # ckpt_callback = ModelCheckpoint(...)
 
 # replace ModelCheckpoint with TrainableParamsCheckPoint
 ckpt_callback = TrainableParamsCheckPoint(...)
-
-# 加入callback list
-callbacks.append(ckpt_callback)
 ```
 
 
@@ -192,13 +190,14 @@ callbacks.append(ckpt_callback)
     <th class="tg-54sw" rowspan="2">模型</th>
     <th class="tg-54sw" rowspan="2">下游任务</th>
     <th class="tg-54sw" rowspan="2">模式</th>
-    <th class="tg-54sw" colspan="4">训练参数</th>
+    <th class="tg-54sw" colspan="5">训练参数</th>
     <th class="tg-54sw" rowspan="2">微调参数占比</th>
     <th class="tg-54sw" rowspan="2">静态内存+动态内存</th>
     <th class="tg-54sw" rowspan="2">精度</th>
   </tr>
   <tr>
     <th class="tg-54sw">epoch</th>
+    <th class="tg-54sw">优化器</th>
     <th class="tg-54sw">学习率</th>
     <th class="tg-54sw">lora_rank</th>
     <th class="tg-54sw">lora_alpha</th>
@@ -210,6 +209,7 @@ callbacks.append(ckpt_callback)
     <td class="tg-rcip" rowspan="2">t-news</td>
     <td class="tg-rcip">baseline</td>
     <td class="tg-rcip">10</td>
+    <td class="tg-rcip">Adam</td>
     <td class="tg-0ys1">1.00E-04</td>
     <td class="tg-rcip">\</td>
     <td class="tg-rcip">\</td>
@@ -220,6 +220,7 @@ callbacks.append(ckpt_callback)
   <tr>
     <td class="tg-rcip">LoRA</td>
     <td class="tg-rcip">10</td>
+    <td class="tg-rcip">Adam</td>
     <td class="tg-0ys1">1.00E-03</td>
     <td class="tg-rcip">8</td>
     <td class="tg-rcip">16</td>
@@ -229,6 +230,7 @@ callbacks.append(ckpt_callback)
   </tr>
 </tbody>
 </table>
+
 
 
 
@@ -293,17 +295,9 @@ Prefix算法原理图: 对于每个下游任务，添加一份和当前任务相
 
 通过以下步骤将模型结构中`key`、`value`和`attention_mask`修改为新的`key`、`value`和`attention_mask`，冻结网络进行训练：
 
-1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
 
-2）定义`PrefixLayer`对象，将`PrefixLayer`对象中的`past_key_reparam`、`past_value_reparam`矩阵与原`key`、`value`矩阵进行`concat`操作。
-
-3）定义全为1的`help`矩阵，将原`attention_mask`矩阵与`help`矩阵进行`concat`。（新的`attention_mask`矩阵`shape`与新的`query*key`矩阵的`shape`相同）
-
-4）在模型定义优化器之前调用`freeze_delta`方法冻结除`Prefix`矩阵外其他权重。注意，预训练模型微调时，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。
-
-5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
-
-6）评估方法参考附录A
+2）在模型的Attention结构中，从工具包中引入`PrefixLayer`类，创建`prefixlayer`，将`prefixlayer`对象中的`past_key_reparam`、`past_value_reparam`矩阵与原`key`、`value`矩阵进行`concat`操作。然后定义全为1的`help`矩阵，将原`attention_mask`矩阵与`help`矩阵进行`concat`（新的`attention_mask`矩阵shape与新的`query`*`key`矩阵的shape相同）。
 
 ```python
 import mindspore
@@ -333,7 +327,8 @@ class MaskSelfAttention(nn.Cell):
                                               seq_length, seq_length]))
         self.help = Tensor(numpy.ones([self.prefix.batch_size,
                                        self.prefix.num_heads, seq_length, 
-                                       self.prefix.prefix_token_num / self.prefix.batch_size]))
+                                       self.prefix.prefix_token_num // self.prefix.batch_size]))
+    
     def construct(self, input_tensor, attention_mask):
         ...
         ...
@@ -348,26 +343,29 @@ class MaskSelfAttention(nn.Cell):
         attention_mask = mindspore.ops.concat((attention_mask, self.help), -1)
 ```
 
-```python
+3）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除`Prefix`矩阵外其它原模型权重。注意，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
+```Python
 from tk.graph.freeze_utils import freeze_delta
+
+# freeze all cell except Prefix and head
+freeze_delta(model=network, mode='prefix', exclude=['*head*'])
+```
+
+然后从工具包中引入`TrainableParamsCheckPoint`类，将保存ckpt的类改为`TrainableParamsCheckPoint`，仅保存需要更新的参数，可节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+
+由于微调后只保存了部分参数，推理时具体如何加载ckpt请参考[附录A](###A 分布式微调后模型评估方法)。
+
+```python
 from tk.graph import TrainableParamsCheckPoint
 
-# 下游任务微调脚本
-def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoint_path="", epoch_num=1):
-    ...
-    # 第四步 冻结预训练模型的参数
-    freeze_delta(network, 'prefixtuning', exclude=['*.bias'])
-    
-    # original callback
-    # ckpt_callback = ModelCheckpoint(...)
+# original callback
+# ckpt_callback = ModelCheckpoint(...)
 
-    # replace ModelCheckpoint with TrainableParamsCheckPoint
-    ckpt_callback = TrainableParamsCheckPoint(...)
-
-    # 加入callback list
-    callbacks.append(ckpt_callback)
+# replace ModelCheckpoint with TrainableParamsCheckPoint
+ckpt_callback = TrainableParamsCheckPoint(...)
 ```
+
 
 
 ### 2.4 实验效果
@@ -380,13 +378,14 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     <th class="tg-54sw" rowspan="2">模型</th>
     <th class="tg-54sw" rowspan="2">下游任务</th>
     <th class="tg-54sw" rowspan="2">模式</th>
-    <th class="tg-54sw" colspan="3">训练参数</th>
+    <th class="tg-54sw" colspan="4">训练参数</th>
     <th class="tg-54sw" rowspan="2">微调参数占比</th>
     <th class="tg-54sw" rowspan="2">静态内存+动态内存</th>
     <th class="tg-54sw" rowspan="2">ppl</th>
   </tr>
   <tr>
     <th class="tg-54sw">epoch</th>
+    <th class="tg-54sw">优化器</th>
     <th class="tg-54sw">学习率</th>
     <th class="tg-54sw">prefix_token_num</th>
   </tr>
@@ -397,6 +396,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     <td class="tg-rcip" rowspan="2">language modeling</td>
     <td class="tg-rcip">baseline</td>
     <td class="tg-rcip">5</td>
+    <td class="tg-rcip">Adamw</td>
     <td class="tg-0ys1">1.00E-04</td>
     <td class="tg-rcip">\</td>
     <td class="tg-rcip">100%</td>
@@ -406,6 +406,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
   <tr>
     <td class="tg-rcip">prefix</td>
     <td class="tg-rcip">5</td>
+    <td class="tg-rcip">Adamw</td>
     <td class="tg-0ys1">5.00E-03</td>
     <td class="tg-rcip">10</td>
     <td class="tg-rcip">4.35%</td>
@@ -414,6 +415,7 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
   </tr>
 </tbody>
 </table>
+
 
 
 
@@ -492,14 +494,15 @@ shape为 `(∗, out_channels)` 的Tensor 。
 
 * **TypeError** - `in_channels`，`out_channels`或`bottleneck_size`不是正整数。
 * **TypeError** - `has_bias`不是bool值。
-* **TypeError** - `activation`不是`str`、`Cell`、`Primitive`或者`None`。
+* **TypeError** - `activation`不是`str`、`Cell`、`Primitive`。
 * **TypeError** - `param_init_type`，`compute_dtype`不为`dtype`类型数据。
-* **TypeError** - `non_linearity`不属于`get_activation`方法所支持的激活函数类型。
+* **TypeError** - non_linearity不是str类型。
 * **TypeError** - `weight_init`，`bias_init`不是`Tensor`, `str`, `Initializer`, `numbers.Number`。
 * **ValueError** - `weight_init`，`bias_init`不属于提供的`initializer`函数提供的初始化方法。
 * **ValueError** - `weight_init`的shape长度不等于2，`weight_init`的shape[0]不等于`out_channels`，或者`weight_init`的shape[1]不等于`in_channels`。
 * **ValueError** - `bias_init`的shape长度不等于1或`bias_init`的shape[0]不等于`out_channels`。
 * **ValueError** - `in_channel`，`out_channel`，`bottleneck_size`为0或负数。
+* **ValueError** - non_linearity是str类型，但不是`get_activation` 方法所支持的激活函数列表。
 * **KeyError** - `activation`不属于`get_activation`方法所支持的激活函数类型。
 
 
@@ -594,9 +597,10 @@ $$
 
 * **TypeError** - hidden_size，bottleneck_size不是int类型数据。
 * **TypeError** - bottleneck_size不为int类型数据。
-* **TypeError** - non_linearity不属于str类型，或是str类型但不是`get_activation` 方法所支持的激活函数列表。
+* **TypeError** - non_linearity不是str类型。
 * **TypeError** - param_init_type，compute_dtype不为dtype类型数据;或是为dtype类型，但不在[mindspore.dtype.float32, mindspore.dtype.float16]范围内。
 * **ValueError** - hidden_size，bottleneck_size为0或负数。
+* **ValueError** - non_linearity是str类型，但不是`get_activation` 方法所支持的激活函数列表。
 
 
 
@@ -640,17 +644,9 @@ shard(strategy_matmul_down_sampler=None,
 
 通过以下步骤将模型结构中的线性层修改为带有Adapter结构的线性层：
 
-1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
 
-2）将原有`nn.Dense`函数替换为`AdapterDense`，原线性层参数无需任何修改。根据实际需要，配置`bottleneck_size`参数的大小。
-
-3）如果进行分布式训练，需调用shard方法指定分布式策略。
-
-4）在模型定义优化器之前使用`freeze_delta`方法冻结除Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
-
-5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
-
-6）评估方法参考附录A
+2）在模型的Attention结构中，从工具包中引入`AdapterDense`类，并参照算法原理将原有`nn.Dense`类替换为`AdapterDense`，无需修改原始参数，需新增`bottleneck_size`必选参数，其余参数可参考API接口自行指定。如果进行分布式训练，则调用`shard`方法指定分布式策略。
 
 ```python
 from tk.delta import AdapterDense
@@ -671,44 +667,40 @@ dense1.shard(strategy_matmul_org=((2, 4), (1, 4)),
              strategy_matmul_up_sampler=((2, 1), (1, 1)),
              strategy_bias_up_sampler=((2, 1), (1,)),
              strategy_residential_add=((2, 1), (2, 1)))
-
-
 ```
 
-```python
-from tk.graph import freeze_delta
-from tk.graph import TrainableParamsCheckPoint
+3）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除`Adapter`矩阵外其它原模型权重。注意，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
-# freeze all cell except Adapter
+```Python
+from tk.graph.freeze_utils import freeze_delta
+
+# freeze all cell except Adapter and head
 freeze_delta(model=network, mode='adapter', exclude=['*head*'])
+```
+
+然后从工具包中引入`TrainableParamsCheckPoint`类，将保存ckpt的类改为`TrainableParamsCheckPoint`，仅保存需要更新的参数，可节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+
+由于微调后只保存了部分参数，推理时具体如何加载ckpt请参考[附录A](###A 分布式微调后模型评估方法)。
+
+```python
+from tk.graph import TrainableParamsCheckPoint
 
 # original callback
 # ckpt_callback = ModelCheckpoint(...)
 
 # replace ModelCheckpoint with TrainableParamsCheckPoint
 ckpt_callback = TrainableParamsCheckPoint(...)
-
-# 加入callback list
-callbacks.append(ckpt_callback)
-
 ```
+
 
 
 #### AdapterLayer
 
 通过以下步骤在模型结构中的线性层之后插入AdapterLayer层：
 
-1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
 
-2）在原有`nn.Dense`层之后插入`AdapterLayer`，原线性层参数无需任何修改。根据实际需要，配置`bottleneck_size`参数的大小。
-
-3）在模型的`construct`方法中，将线性层的输出，作为`AdapterLayer`的输入。
-
-4）如果进行分布式训练，需调用shard方法指定分布式策略。
-
-5）在模型定义优化器之前使用`freeze_delta`方法冻结除Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
-
-6）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+2）在模型的Attention结构中，从工具包中引入`AdapterDense`类，并参照算法原理在原有`nn.Dense`类后插入`AdapterDense`，无需修改原始参数，需新增`bottleneck_size`必选参数，其余参数可参考API接口自行指定。然后在模型的`construct`方法中，将线性层的输出，作为`AdapterLayer`的输入。如果进行分布式训练，则调用`shard`方法指定分布式策略。
 
 ```python
 import mindspore.nn as nn
@@ -733,23 +725,29 @@ adapter_layer.shard(strategy_matmul_down_sampler=((2, 1), (1, 1)),
 # in model construct method
 dense_output = dense(input_tensor)
 adapter_layer_output = adapter_layer(dense_output)
-
 ```
 
-```python
-from tk.graph import freeze_delta
+3）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除`Adapter`矩阵外其它原模型权重。注意，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
-# freeze all cell except Adapter
+```Python
+from tk.graph.freeze_utils import freeze_delta
+
+# freeze all cell except Adapter and head
 freeze_delta(model=network, mode='adapter', exclude=['*head*'])
+```
+
+然后从工具包中引入`TrainableParamsCheckPoint`类，将保存ckpt的类改为`TrainableParamsCheckPoint`，仅保存需要更新的参数，可节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+
+由于微调后只保存了部分参数，推理时具体如何加载ckpt请参考[附录A](###A 分布式微调后模型评估方法)。
+
+```python
+from tk.graph import TrainableParamsCheckPoint
 
 # original callback
 # ckpt_callback = ModelCheckpoint(...)
 
 # replace ModelCheckpoint with TrainableParamsCheckPoint
 ckpt_callback = TrainableParamsCheckPoint(...)
-
-# 加入callback list
-callbacks.append(ckpt_callback)
 ```
 
 
@@ -764,13 +762,14 @@ callbacks.append(ckpt_callback)
     <th class="tg-54sw" rowspan="2">模型</th>
     <th class="tg-54sw" rowspan="2">下游任务</th>
     <th class="tg-54sw" rowspan="2">模式</th>
-    <th class="tg-54sw" colspan="3">训练参数</th>
+    <th class="tg-54sw" colspan="4">训练参数</th>
     <th class="tg-54sw" rowspan="2">微调参数占比</th>
     <th class="tg-54sw" rowspan="2">静态内存+动态内存</th>
     <th class="tg-54sw" rowspan="2">精度</th>
   </tr>
   <tr>
     <th class="tg-54sw">epoch</th>
+    <th class="tg-54sw">优化器</th>
     <th class="tg-54sw">学习率</th>
     <th class="tg-54sw">bottleneck_size</th>
   </tr>
@@ -781,6 +780,7 @@ callbacks.append(ckpt_callback)
     <td class="tg-rcip" rowspan="2">t-news</td>
     <td class="tg-rcip">baseline</td>
     <td class="tg-rcip">10</td>
+    <td class="tg-rcip">Adam</td>
     <td class="tg-0ys1">1.00E-04</td>
     <td class="tg-rcip">\</td>
     <td class="tg-rcip">100%</td>
@@ -790,6 +790,7 @@ callbacks.append(ckpt_callback)
   <tr>
     <td class="tg-rcip">adapter</td>
     <td class="tg-rcip">10</td>
+    <td class="tg-rcip">Adam</td>
     <td class="tg-0ys1">1.00E-03</td>
     <td class="tg-rcip">64</td>
     <td class="tg-rcip">2.33%</td>
@@ -894,11 +895,11 @@ $$
 
 * **TypeError** - in_channels，out_channels不是int类型数据。
 * **TypeError** - has_bias不是bool值。
-* **TypeError** - activation不是str、Cell、Primitive或者None。
+* **TypeError** - activation不是str、Cell、Primitive。
 * **TypeError** - weight_init，bias_init不是[Tensor, str, Initializer, numbers.Number]类型。
 * **TypeError** - reduction_factor、low_rank_size不为int类型数据。
 * **TypeError** - low_rank_w_init不属于str类型，亦不是Initializer类型。
-* **TypeError** - non_linearity不属于str类型，或是str类型但不是`get_activation` 方法所支持的激活函数列表。
+* **TypeError** - non_linearity不是str类型。
 * **TypeError** - param_init_type，compute_dtype不为dtype类型数据;或是为dtype类型，但不在[mindspore.dtype.float32, mindspore.dtype.float16]范围内。
 * **ValueError** - weight_init，bias_init不属于提供的`initializer`函数提供的初始化方法。
 * **ValueError** - weight_init的类型为Tensor，1）其shape长度不等于2；2）weight_init 的shape[0]不等于out_channels；3） weight_init的shape[1]不等于 in_channels。
@@ -906,6 +907,7 @@ $$
 * **ValueError** - in_channel ，out_channel，reduction_factor、low_rank_size为0或负数。
 * **ValueError** - low_rank_w_init属于str类型，但不是Initializer支持的初始化类型值。
 * **KeyError** - activation不属于mindspore中 `get_activation` 方法所支持的激活函数类型。
+* **ValueError** - non_linearity是str类型，但不是`get_activation` 方法所支持的激活函数列表。
 * **ValueError** - reduction_factor值大于out_channels。
 
 
@@ -1018,10 +1020,11 @@ shape为 `(∗, out_channels)` 的Tensor 。参数中的 `out_channels` 应等�
 * **TypeError** - hidden_size不是int类型数据。
 * **TypeError** - reduction_factor、low_rank_size不为int类型数据。
 * **TypeError** - low_rank_w_init不属于str类型，亦不是Initializer类型。
-* **TypeError** - non_linearity不属于str类型，或是str类型但不是`get_activation` 方法所支持的激活函数列表。
+* **TypeError** - non_linearity不是str类型。
 * **TypeError** - param_init_type，compute_dtype不为dtype类型数据;或是为dtype类型，但不在[mindspore.dtype.float32, mindspore.dtype.float16]范围内。
 * **ValueError** - reduction_factor、low_rank_size为0或负数。
 * **ValueError** - low_rank_w_init属于str类型，但不是Initializer支持的初始化类型值。
+* **ValueError** - non_linearity是str类型，但不是`get_activation` 方法所支持的激活函数列表。
 * **ValueError** - reduction_factor值大于hidden_size。
 
 
@@ -1070,17 +1073,9 @@ shard(strategy_matmul_down_sampler_weight=None,
 
 通过以下步骤将模型结构中的线性层修改为带有Low-Rank Adapter结构的线性层：
 
-1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
 
-2）将原有`nn.Dense`函数替换为`LowRankAdapterDense`，原线性层参数无需任何修改。根据实际需要，配置 `reduction_factor`等新增参数的值。
-
-3）如果进行分布式训练，需调用shard方法指定分布式策略。
-
-4）在模型定义优化器之前使用`freeze_delta`方法冻结除Low-Rank Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
-
-5）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
-
-6）评估方法参考附录A
+2）在模型的Attention结构中，从工具包中引入`LowRankAdapterDense`类，并参照算法原理将原有`nn.Dense`类替换为`LowRankAdapterDense`，原线性层参数无需任何修改。根据实际需要，配置`reduction_factor`等新增参数的值。如果进行分布式训练，需调用`shard`方法指定分布式策略。
 
 ```python
 import mindspore.nn as nn
@@ -1106,22 +1101,27 @@ dense1.shard(strategy_matmul_org=((2, 4), (1, 4)),
              strategy_residual_add=((2, 1), (2, 1)))
 ```
 
-```python
-from tk.graph import freeze_delta
-from tk.graph import TrainableParamsCheckPoint
+3）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除`LowRankAdapter`矩阵外其它原模型权重。注意，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
-# freeze all cell except Low-Rank Adapter
+```Python
+from tk.graph.freeze_utils import freeze_delta
+
+# freeze all cell except LowRankAdapter and head
 freeze_delta(model=network, mode='low_rank_adapter', exclude=['*head*'])
+```
+
+然后从工具包中引入`TrainableParamsCheckPoint`类，将保存ckpt的类改为`TrainableParamsCheckPoint`，仅保存需要更新的参数，可节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+
+由于微调后只保存了部分参数，推理时具体如何加载ckpt请参考[附录A](###A 分布式微调后模型评估方法)。
+
+```python
+from tk.graph import TrainableParamsCheckPoint
 
 # original callback
 # ckpt_callback = ModelCheckpoint(...)
 
 # replace ModelCheckpoint with TrainableParamsCheckPoint
 ckpt_callback = TrainableParamsCheckPoint(...)
-
-# 加入callback list
-callbacks.append(ckpt_callback)
-
 ```
 
 
@@ -1130,17 +1130,9 @@ callbacks.append(ckpt_callback)
 
 通过以下步骤在模型结构中的线性层之后插入Low-Rank Adapter层：
 
-1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
 
-2）在原有`nn.Dense`层之后插入`LowRankAdapterLayer`，原线性层参数无需任何修改。根据实际需要，配置 `reduction_factor`等参数的值。
-
-3）在模型的`construct`方法中，将线性层的输出，作为`LowRankAdapterLayer`的输入。
-
-4）如果进行分布式训练，需调用shard方法指定分布式策略。
-
-5）在模型定义优化器之前使用`freeze_delta`方法冻结除Low-Rank Adapter矩阵外其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
-
-6）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+2）在模型的Attention结构中，从工具包中引入`LowRankAdapterDense`类，并参照算法原理在原有`nn.Dense`类后插入`LowRankAdapterDense`，原线性层参数无需任何修改。根据实际需要，配置`reduction_factor`等新增参数的值，然后在`construct`方法中，将线性层的输出，作为`LowRankAdapterLayer`的输入。如果进行分布式训练，需调用`shard`方法指定分布式策略。
 
 ```python
 import mindspore.nn as nn
@@ -1169,21 +1161,27 @@ dense_output = dense(input_tensor)
 adapter_layer_output = low_rank_adapter_layer(dense_output)
 ```
 
-```python
-from tk.graph import freeze_delta
-from tk.graph import TrainableParamsCheckPoint
+3）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除`LowRankAdapter`矩阵外其它原模型权重。注意，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
-# freeze all cell except Low-Rank Adapter
+```Python
+from tk.graph.freeze_utils import freeze_delta
+
+# freeze all cell except LowRankAdapter and head
 freeze_delta(model=network, mode='low_rank_adapter', exclude=['*head*'])
+```
+
+然后从工具包中引入`TrainableParamsCheckPoint`类，将保存ckpt的类改为`TrainableParamsCheckPoint`，仅保存需要更新的参数，可节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+
+由于微调后只保存了部分参数，推理时具体如何加载ckpt请参考[附录A](###A 分布式微调后模型评估方法)。
+
+```python
+from tk.graph import TrainableParamsCheckPoint
 
 # original callback
 # ckpt_callback = ModelCheckpoint(...)
 
 # replace ModelCheckpoint with TrainableParamsCheckPoint
 ckpt_callback = TrainableParamsCheckPoint(...)
-
-# 加入callback list
-callbacks.append(ckpt_callback)
 ```
 
 
@@ -1198,13 +1196,14 @@ callbacks.append(ckpt_callback)
     <th class="tg-54sw" rowspan="2">模型</th>
     <th class="tg-54sw" rowspan="2">下游任务</th>
     <th class="tg-54sw" rowspan="2">模式</th>
-    <th class="tg-54sw" colspan="4">训练参数</th>
+    <th class="tg-54sw" colspan="5">训练参数</th>
     <th class="tg-54sw" rowspan="2">微调参数占比</th>
     <th class="tg-54sw" rowspan="2">静态内存+动态内存</th>
     <th class="tg-54sw" rowspan="2">精度</th>
   </tr>
   <tr>
     <th class="tg-54sw">epoch</th>
+    <th class="tg-54sw">优化器</th>
     <th class="tg-54sw">学习率</th>
     <th class="tg-54sw">reduction_factor</th>
     <th class="tg-54sw">low_rank_size</th>
@@ -1216,6 +1215,7 @@ callbacks.append(ckpt_callback)
     <td class="tg-rcip" rowspan="2">t-news</td>
     <td class="tg-rcip">baseline</td>
     <td class="tg-rcip">10</td>
+    <td class="tg-rcip">Adam</td>
     <td class="tg-0ys1">1.00E-04</td>
     <td class="tg-rcip">\</td>
     <td class="tg-rcip">\</td>
@@ -1226,6 +1226,7 @@ callbacks.append(ckpt_callback)
   <tr>
     <td class="tg-rcip">low-rank adapter</td>
     <td class="tg-rcip">10</td>
+    <td class="tg-rcip">Adam</td>
     <td class="tg-0ys1">3.00E-03</td>
     <td class="tg-rcip">32</td>
     <td class="tg-rcip">1</td>
@@ -1235,6 +1236,7 @@ callbacks.append(ckpt_callback)
   </tr>
 </tbody>
 </table>
+
 
 
 
@@ -1260,29 +1262,29 @@ freeze_delta(model, mode, include, exclude)
 
 ### 5.3 使用样例
 
-1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
 
-2）在模型定义优化器之前使用`freeze_delta`方法冻结除bias参数外的其他权重。注意，如果预训练模型在进行微调时，需要引入适配下游任务的额外模型结构，该模型结构需要额外指定不冻结。
-
-3）在保存模型ckpt时可使用`TrainableParamsCheckPoint`接口，仅保存需要更新的参数，节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
-
-4）评估方法参考附录A
+2）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除bias参数外其它原模型权重。注意，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
 
 ```python
 from tk.graph.freeze_utils import freeze_delta
-from tk.graph import TrainableParamsCheckPoint
 
 # freeze all cell except bias and head
 freeze_delta(model=network, mode='bitfit', exclude=['*head*'])
+```
+
+然后从工具包中引入`TrainableParamsCheckPoint`类，将保存ckpt的类改为`TrainableParamsCheckPoint`，仅保存需要更新的参数，可节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+
+由于微调后只保存了部分参数，推理时具体如何加载ckpt请参考[附录A](###A 分布式微调后模型评估方法)。
+
+```python
+from tk.graph import TrainableParamsCheckPoint
 
 # original callback
 # ckpt_callback = ModelCheckpoint(...)
 
 # replace ModelCheckpoint with TrainableParamsCheckPoint
 ckpt_callback = TrainableParamsCheckPoint(...)
-
-# 加入callback list
-callbacks.append(ckpt_callback)
 ```
 
 
@@ -1297,13 +1299,14 @@ callbacks.append(ckpt_callback)
     <th class="tg-ij4v" rowspan="2"><span style="font-weight:bold">模型</span></th>
     <th class="tg-ij4v" rowspan="2"><span style="font-weight:bold">下游任务</span></th>
     <th class="tg-ij4v" rowspan="2"><span style="font-weight:bold">模式</span></th>
-    <th class="tg-ij4v" colspan="2"><span style="font-weight:bold">训练参数</span></th>
+    <th class="tg-ij4v" colspan="3"><span style="font-weight:bold">训练参数</span></th>
     <th class="tg-ij4v" rowspan="2"><span style="font-weight:bold">微调参数占比</span></th>
     <th class="tg-ij4v" rowspan="2"><span style="font-weight:bold">静态内存+动态内存</span></th>
     <th class="tg-ij4v" rowspan="2"><span style="font-weight:bold">精度</span></th>
   </tr>
   <tr>
     <th class="tg-14zz"><span style="font-weight:bold">epoch</span></th>
+    <th class="tg-14zz"><span style="font-weight:bold">优化器</span></th>
     <th class="tg-14zz"><span style="font-weight:bold">学习率</span></th>
   </tr>
 </thead>
@@ -1313,6 +1316,7 @@ callbacks.append(ckpt_callback)
     <td class="tg-0pky" rowspan="2">t-news</td>
     <td class="tg-0pky">baseline</td>
     <td class="tg-0pky">10</td>
+    <td class="tg-0pky">Adam</td>
     <td class="tg-0pky">1.00E-04</td>
     <td class="tg-0pky">100%</td>
     <td class="tg-0pky">1360MB+1698MB</td>
@@ -1321,6 +1325,7 @@ callbacks.append(ckpt_callback)
   <tr>
     <td class="tg-0pky">bitfit</td>
     <td class="tg-0pky">10</td>
+    <td class="tg-0pky">Adam</td>
     <td class="tg-0pky">3.00E-03</td>
     <td class="tg-0pky">0.09%</td>
     <td class="tg-0pky">456MB+1437MB</td>
@@ -1328,6 +1333,7 @@ callbacks.append(ckpt_callback)
   </tr>
 </tbody>
 </table>
+
 
 
 
@@ -1376,11 +1382,9 @@ class tk.delta.r_drop.RDropLoss.construct(logits, label_ids, alpha)
 
 通过以下步骤使用R_Drop算法：
 
-1）安装mindpet包。（[安装方法参考《README.md》第二章](../README.md)）
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）。
 
-2）将模型的`CrossEntropyLoss`替换为`RDropLoss`。
-
-3）在模型的`construct`方法中，调用`rdrop_repeat`复制输入数据；再调用`RDropLoss`的`construct`方法，并且指定alpha超参(默认为4)。
+2）在模型主干网络中，从工具包中引入`RDropLoss`类和`drop_repeat`方法，将计算损失函数的`CrossEntropyLoss`类替换为`RDropLoss`。然后在`construct`方法中，调用`rdrop_repeat`复制输入数据。最后调用`RDropLoss`的`construct`方法并指定`alpha`超参（默认为4）。
 
 
 ```python
@@ -1421,14 +1425,13 @@ class BertClsModel(BaseModel):
     <th class="tg-54sw" rowspan="2">模型</th>
     <th class="tg-54sw" rowspan="2">下游任务</th>
     <th class="tg-54sw" rowspan="2">模式</th>
-    <th class="tg-54sw" colspan="4">训练参数</th>
+    <th class="tg-54sw" colspan="3">训练参数</th>
     <th class="tg-54sw" rowspan="2">内存</th>
       <th class="tg-54sw" rowspan="2">per step time</th>
     <th class="tg-54sw" rowspan="2">精度</th>
   </tr>
   <tr>
     <th class="tg-54sw">epoch</th>
-    <th class="tg-54sw">学习率</th>
     <th class="tg-54sw">dropout_rate</th>
     <th class="tg-54sw">alpha</th>
   </tr>
@@ -1439,7 +1442,6 @@ class BertClsModel(BaseModel):
     <td class="tg-rcip" rowspan="2">IFLYTEK</td>
     <td class="tg-rcip">baseline</td>
     <td class="tg-rcip">50</td>
-    <td class="tg-0ys1">1.00E-05</td>
     <td class="tg-rcip">0.2</td>
     <td class="tg-rcip">\</td>
     <td class="tg-rcip">1183MB</td>
@@ -1449,7 +1451,6 @@ class BertClsModel(BaseModel):
   <tr>
     <td class="tg-rcip">R_Drop</td>
     <td class="tg-rcip">50</td>
-    <td class="tg-0ys1">1.00E-05</td>
     <td class="tg-rcip">0.2</td>
     <td class="tg-rcip">6</td>
     <td class="tg-rcip">1195MB</td>
@@ -1461,19 +1462,20 @@ class BertClsModel(BaseModel):
 
 
 
+
 ## 附录
 
-### A 分布式微调后模型评估方法
+### A 微调后模型评估方法
 
-当mindspore版本<=1.9时，分布式微调之后，需要按照以下方案进行评估：
-
-#### 场景一:使用TrainableParamsCheckPoint接口
+#### 场景一：使用TrainableParamsCheckPoint接口
 参考[《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)
 #### 场景二：未使用TrainableParamsCheckPoint接口
 
-1.使用预训练的分布式策略文件加载预训练参数；
+当MindSpore版本低于1.9及以下时，在分布式微调之后，需要按照以下方案进行推理，示例代码参见如下，其中checkpoint文件列表、分布式策略文件路径、模型实例需要用户根据实际情况进行替换。
 
-2.使用微调后的分布式策略文件加载微调后的参数。
+1. 使用预训练的分布式策略文件加载预训练参数；
+
+2. 使用微调后的分布式策略文件加载微调后的参数。
 
 ```python
 from mindspore import load_distributed_checkpoint
@@ -1485,7 +1487,7 @@ pre_trained_strategy_path = 'xxxxx'
 load_distributed_checkpoint(network=net, checkpoint_filenames=pre_trained_ckpt_list,
                             train_strategy_filename=pre_trained_strategy_path)
 
-## 微调后保存的ckpt文件列表
+## 微调后保存的checkpoint文件列表
 finetuned_ckpt_list = [...]
 ## 微调后保存的策略文件
 finetuned_strategy_path = 'xxxxx'

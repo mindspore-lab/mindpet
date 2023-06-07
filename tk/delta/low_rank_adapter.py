@@ -3,18 +3,27 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2022-2023, All rights reserved.
 
 import numbers
+from tk.utils.version_utils import is_version_ge
 
+import mindspore as ms
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.parameter import Parameter
 from mindspore import Tensor
-from mindspore._checkparam import Validator
+
 from mindspore.nn.layer.activation import get_activation, _activation
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.nn.transformer.layers import _args_type_validator_check, _valid_type_checks, _valid_value_checks
 from tk.delta.delta_constants import VALID_TENSOR_DATATYPE
+
+if is_version_ge(ms.__version__, '2.0.0'):
+    from mindformers.modules.layers import _args_type_validator_check, _valid_type_checks, _valid_value_checks
+    import mindspore._checkparam as Validator
+else:
+    from mindspore.nn.transformer.layers import _args_type_validator_check, _valid_type_checks, _valid_value_checks
+    from mindspore._checkparam import Validator
+
 
 
 class LowRankLinear(nn.Cell):

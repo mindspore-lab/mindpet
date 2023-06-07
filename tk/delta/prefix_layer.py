@@ -2,11 +2,17 @@
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2010-2022. All rights reserved.
 
-import mindspore
-
+import mindspore as ms
 import mindspore.nn as nn
 
-from mindspore._checkparam import Validator, Rel
+from tk.utils.version_utils import is_version_ge
+
+if is_version_ge(ms.__version__, '2.0.0'):
+    import mindspore._checkparam as Validator
+    INC_LEFT = Validator.INC_LEFT
+else:
+    from mindspore._checkparam import Validator, Rel
+    INC_LEFT = Rel.INC_LEFT
 
 
 def check_multiple(param_dividend, value_dividend, param_divisor, value_divisor):
@@ -43,13 +49,16 @@ class PrefixLayer(nn.Cell):
         self.hidden_dim = Validator.check_positive_int(hidden_dim, int, "hidden_dim")
         self.embed_dim = Validator.check_positive_int(embed_dim, int, "embed_dim")
         self.mid_dim = Validator.check_positive_int(mid_dim, int, "mid_dim")
-        self.dropout_rate = Validator.check_float_range(dropout_rate, 0.0, 1.0, Rel.INC_LEFT)
+        self.dropout_rate = Validator.check_float_range(dropout_rate, 0.0, 1.0, INC_LEFT)
         try:
             check_multiple("prefix_token_num", prefix_token_num, "batch_size", batch_size)
         except ValueError as ex:
             raise ValueError(f"Invalid param [prefix_token_num] when initializing"
                              f"PrefixLayer, error message:{str(ex)}") from ex
-        self.dropout = nn.Dropout(keep_prob=1 - dropout_rate)
+        if is_version_ge(ms.__version__, '2.0.0'):
+            self.dropout = nn.Dropout(p=dropout_rate)
+        else:
+            self.dropout = nn.Dropout(keep_prob=1 - dropout_rate)
         self.past_value_reparam = None
         self.past_key_reparam = None
         self.__define_network()
@@ -57,7 +66,7 @@ class PrefixLayer(nn.Cell):
 
     def __define_network(self) -> None:
         """the network structure of prefix"""
-        self.input_tokens = mindspore.Parameter(mindspore.numpy.arange(0, self.prefix_token_num, 1),
+        self.input_tokens = ms.Parameter(ms.numpy.arange(0, self.prefix_token_num, 1),
                                                 name="tk_delta_prefixtuning_input_tokens", requires_grad=False)
         self.tk_delta_prefixtuning_wte = nn.Embedding(self.prefix_token_num, self.embed_dim)
         self.tk_delta_prefixtuning_control_trans = nn.SequentialCell(
@@ -74,6 +83,6 @@ class PrefixLayer(nn.Cell):
         seq_len, _ = past_key_values.shape
         past_key_values = past_key_values.view(seq_len, -1, self.hidden_dim)
         past_key_values = self.dropout(past_key_values)
-        past_key_values = mindspore.ops.transpose(past_key_values, (1, 0, 2)).split(2)
+        past_key_values = ms.ops.transpose(past_key_values, (1, 0, 2)).split(2)
         self.past_key_reparam = past_key_values[0][0]
         self.past_value_reparam = past_key_values[0][0]

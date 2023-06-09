@@ -1,0 +1,19 @@
+params:
+  learning_rate: 1e-4
+  batch_size: 32
+
+freeze:
+  bottleneck:
+    block1:
+      layer1:
+        weight
+        bias
+      layer2:
+        weight
+    block2:
+      layer1:
+        weight
+        bias
+  fc:
+    weight
+    bias

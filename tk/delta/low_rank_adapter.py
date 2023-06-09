@@ -25,7 +25,6 @@ else:
     from mindspore._checkparam import Validator
 
 
-
 class LowRankLinear(nn.Cell):
     """
     定义微调算法LowRankLinear层, 其主要结构包含两个compactor。为LowRankAdapterLayer所调用。

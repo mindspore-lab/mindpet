@@ -4,9 +4,14 @@
 
 def is_version_le(current_version, base_version):
     """
-        return current_version <= base_version.
-        Check whether the current version is lower than or equal to the base version.
-        For example: for current_version: 1.8.1, base_version: 2.0.0, it return True.
+    description: Check whether the current version is lower than or equal to the base version.
+    args:
+        current_version: string, like "1.10.1"
+        base_version: string, like "2.0.0rc1"
+    return:
+        Bool: current_version <= base_version
+    example:
+        for current_version: 1.10.1, base_version: 2.0.0rc1, it return True.
     """
     version_split_char = '.'
     if version_split_char not in base_version or version_split_char not in current_version:
@@ -22,9 +27,14 @@ def is_version_le(current_version, base_version):
 
 def is_version_ge(current_version, base_version):
     """
-        return current_version >= base_version.
-        Check whether the current version is higher than or equal to the base version.
-        for current_version: 1.8.1, base_version: 2.0.0, it return False.
+    description: Check whether the current version is higher than or equal to the base version.
+    args:
+        current_version: string, like "1.10.1"
+        base_version: string, like "2.0.0rc1"
+    return:
+        Bool: current_version >= base_version
+    example:
+        for current_version: 1.10.1, base_version: 2.0.0rc1, it return False.
     """
     version_split_char = '.'
     if version_split_char not in base_version or version_split_char not in current_version:

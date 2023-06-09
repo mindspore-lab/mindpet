@@ -1,0 +1,5 @@
+freeze:
+    include:
+        '*'
+    exclude:
+        ['transformer.encoder.blocks.*.layernorm*']

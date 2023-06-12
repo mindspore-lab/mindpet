@@ -20,6 +20,7 @@ class RDropLoss(nn.Cell):
         self.softmax = nn.Softmax(axis=-1)
         self.reshape = ops.Reshape()
         self.gather = ops.Gather()
+        self.kl_div = ops.KLDivLoss(reduction='sum')
 
     def construct(self, logits, label_ids, alpha=4):
         """
@@ -46,8 +47,8 @@ class RDropLoss(nn.Cell):
 
         ce_loss = self.cross_entropy_loss(logits, label_ids)
 
-        kl_loss_1 = ops.kl_div(logits=self.log_softmax(logits_1), labels=self.softmax(logits_2), reduction='sum')
-        kl_loss_2 = ops.kl_div(logits=self.log_softmax(logits_2), labels=self.softmax(logits_1), reduction='sum')
+        kl_loss_1 = self.kl_div(self.log_softmax(logits_1), self.softmax(logits_2))
+        kl_loss_2 = self.kl_div(self.log_softmax(logits_2), self.softmax(logits_1))
         kl_loss = (kl_loss_1 + kl_loss_2).mean() / 4 * alpha
         return_value = ce_loss + kl_loss
         return return_value

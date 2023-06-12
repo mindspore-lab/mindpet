@@ -1,0 +1,5 @@
+freeze:
+    include:
+        ['*embedding*', 'transformer*', 'dense.weight']
+    exclude:
+        ['transformer.encoder.blocks.*.layernorm*']

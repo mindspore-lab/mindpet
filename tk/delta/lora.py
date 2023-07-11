@@ -16,7 +16,7 @@ from mindspore.ops import functional as F
 from mindspore.common.initializer import initializer, HeUniform
 from tk.delta.delta_constants import VALID_TENSOR_DATATYPE
 
-if is_version_ge(ms.__version__, '2.0.0'):
+if is_version_ge(ms.__version__, '1.11.0'):
     import mindspore._checkparam as Validator
     INC_LEFT = Validator.INC_LEFT
 else:
@@ -60,7 +60,7 @@ class LoRADense(nn.Dense):
         # Define and initialize params
         self.lora_rank = lora_rank
         self.lora_alpha = lora_alpha
-        if is_version_ge(ms.__version__, '2.0.0'):
+        if is_version_ge(ms.__version__, '1.11.0'):
             self.lora_dropout = nn.Dropout(p=lora_dropout)
         else:
             self.lora_dropout = nn.Dropout(keep_prob=1 - lora_dropout)

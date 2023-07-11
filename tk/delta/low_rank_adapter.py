@@ -17,7 +17,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from tk.delta.delta_constants import VALID_TENSOR_DATATYPE
 
-if is_version_ge(ms.__version__, '2.0.0'):
+if is_version_ge(ms.__version__, '1.11.0'):
     from mindformers.modules.layers import _args_type_validator_check, _valid_type_checks, _valid_value_checks
     import mindspore._checkparam as Validator
 else:

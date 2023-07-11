@@ -7,7 +7,7 @@ import mindspore.nn as nn
 
 from tk.utils.version_utils import is_version_ge
 
-if is_version_ge(ms.__version__, '2.0.0'):
+if is_version_ge(ms.__version__, '1.11.0'):
     import mindspore._checkparam as Validator
     INC_LEFT = Validator.INC_LEFT
 else:
@@ -55,7 +55,7 @@ class PrefixLayer(nn.Cell):
         except ValueError as ex:
             raise ValueError(f"Invalid param [prefix_token_num] when initializing"
                              f"PrefixLayer, error message:{str(ex)}") from ex
-        if is_version_ge(ms.__version__, '2.0.0'):
+        if is_version_ge(ms.__version__, '1.11.0'):
             self.dropout = nn.Dropout(p=dropout_rate)
         else:
             self.dropout = nn.Dropout(keep_prob=1 - dropout_rate)

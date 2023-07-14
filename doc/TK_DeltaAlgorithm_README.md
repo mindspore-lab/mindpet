@@ -1470,7 +1470,7 @@ class BertClsModel(BaseModel):
 
 ### 7.1 算法介绍
 
-Prompt-Tuning算法通过为文本任务的输入提娜佳前缀提示信息Prompt，无需修改上游预训练模型参数，即能实现下游任务的微调。前缀Prompt并非来自人工标注，而是由深度神经网络表示，对每一个下游任务，在微调时只需要冻结预训练权重，额外训练Prompt部分的参数即可。
+Prompt-Tuning算法通过为文本任务的输入前缀提示信息Prompt，无需修改上游预训练模型参数，即能实现下游任务的微调。前缀Prompt并非来自人工标注，而是由深度神经网络表示，对每一个下游任务，在微调时只需要冻结预训练权重，额外训练Prompt部分的参数即可。
 
 算法原理如下图所示，算法具体细节可参考相关论文[The Power of Scale for Parameter-Efficient Prompt Tuning](https://arxiv.org/abs/2104.08691)。
 

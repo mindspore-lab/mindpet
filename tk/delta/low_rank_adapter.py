@@ -3,7 +3,6 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2022-2023, All rights reserved.
 
 import numbers
-from tk.utils.version_utils import is_version_ge
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -17,12 +16,12 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from tk.delta.delta_constants import VALID_TENSOR_DATATYPE
 
-if is_version_ge(ms.__version__, '1.11.0'):
-    from mindformers.modules.layers import _args_type_validator_check, _valid_type_checks, _valid_value_checks
-    import mindspore._checkparam as Validator
-else:
+try:
     from mindspore.nn.transformer.layers import _args_type_validator_check, _valid_type_checks, _valid_value_checks
     from mindspore._checkparam import Validator
+except:
+    from mindformers.modules.layers import _args_type_validator_check, _valid_type_checks, _valid_value_checks
+    import mindspore._checkparam as Validator
 
 
 class LowRankLinear(nn.Cell):

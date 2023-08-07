@@ -3,8 +3,6 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2022-2023, All rights reserved.
 
 import math
-from tk.utils.version_utils import is_version_ge
-
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import ops
@@ -15,13 +13,14 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.initializer import initializer, HeUniform
 from tk.delta.delta_constants import VALID_TENSOR_DATATYPE
+from tk.utils.version_control import get_dropout
 
-if is_version_ge(ms.__version__, '1.11.0'):
-    import mindspore._checkparam as Validator
-    INC_LEFT = Validator.INC_LEFT
-else:
+try:
     from mindspore._checkparam import Validator, Rel
     INC_LEFT = Rel.INC_LEFT
+except:
+    import mindspore._checkparam as Validator
+    INC_LEFT = Validator.INC_LEFT
 
 class LoRADense(nn.Dense):
     """Define a dense layer with LoRA structure.
@@ -60,10 +59,7 @@ class LoRADense(nn.Dense):
         # Define and initialize params
         self.lora_rank = lora_rank
         self.lora_alpha = lora_alpha
-        if is_version_ge(ms.__version__, '1.11.0'):
-            self.lora_dropout = nn.Dropout(p=lora_dropout)
-        else:
-            self.lora_dropout = nn.Dropout(keep_prob=1 - lora_dropout)
+        self.lora_dropout = get_dropout(lora_dropout)
         self.tk_delta_lora_a = Parameter(
             initializer(lora_a_init, [lora_rank, in_channels], param_init_type),
             name='tk_delta_lora_A')

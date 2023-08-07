@@ -5,14 +5,14 @@
 import mindspore as ms
 import mindspore.nn as nn
 
-from tk.utils.version_utils import is_version_ge
+from tk.utils.version_control import get_dropout
 
-if is_version_ge(ms.__version__, '1.11.0'):
-    import mindspore._checkparam as Validator
-    INC_LEFT = Validator.INC_LEFT
-else:
+try:
     from mindspore._checkparam import Validator, Rel
     INC_LEFT = Rel.INC_LEFT
+except:
+    import mindspore._checkparam as Validator
+    INC_LEFT = Validator.INC_LEFT
 
 
 def check_multiple(param_dividend, value_dividend, param_divisor, value_divisor):
@@ -55,10 +55,7 @@ class PrefixLayer(nn.Cell):
         except ValueError as ex:
             raise ValueError(f"Invalid param [prefix_token_num] when initializing"
                              f"PrefixLayer, error message:{str(ex)}") from ex
-        if is_version_ge(ms.__version__, '1.11.0'):
-            self.dropout = nn.Dropout(p=dropout_rate)
-        else:
-            self.dropout = nn.Dropout(keep_prob=1 - dropout_rate)
+        self.dropout = get_dropout(dropout_rate)
         self.past_value_reparam = None
         self.past_key_reparam = None
         self.__define_network()

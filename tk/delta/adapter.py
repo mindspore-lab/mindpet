@@ -3,7 +3,6 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2022-2023, All rights reserved.
 
 from collections import OrderedDict
-from tk.utils.version_utils import is_version_ge
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -13,14 +12,14 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from tk.delta.delta_constants import VALID_TENSOR_DATATYPE
 
-if is_version_ge(ms.__version__, '1.11.0'):
+try:
+    from mindspore.nn.transformer.layers import _Linear, _args_type_validator_check, _valid_value_checks
+    from mindspore._checkparam import Validator
+except:
     from mindformers.modules.layers import Linear, _args_type_validator_check, _valid_value_checks
     import mindspore._checkparam as Validator
     _Linear = Linear
-else:
-    from mindspore.nn.transformer.layers import _Linear, _args_type_validator_check, _valid_value_checks
-    from mindspore._checkparam import Validator
-    
+
 class AdapterLayer(nn.Cell):
     """
     定义微调算法adapter layer层，初始化adapter layer层参数，包括矩阵参数、激活层等。

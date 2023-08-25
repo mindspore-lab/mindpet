@@ -26,7 +26,7 @@ python set_up.py bdist_wheel
 
 执行以下命令安装whl包：
 ```shell
-pip install dist/mindpet-1.0.0-py3-none-any.whl
+pip install dist/mindpet-1.0.1-py3-none-any.whl
 ```
 
 

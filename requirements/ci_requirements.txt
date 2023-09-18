@@ -1,0 +1,4 @@
+pyyaml >= 5.3
+tqdm
+pylint
+pytest

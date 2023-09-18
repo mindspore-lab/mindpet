@@ -6,8 +6,8 @@ import os
 import unittest
 import logging
 import pytest
-from tk.utils.entrance_monitor import EntranceMonitor
-from tk.utils.constants import ENTRANCE_TYPE
+from mindpet.utils.entrance_monitor import EntranceMonitor
+from mindpet.utils.constants import ENTRANCE_TYPE
 
 logging.getLogger().setLevel(logging.INFO)
 

@@ -9,11 +9,11 @@ import logging
 from unittest import TestCase, mock
 
 import pytest
-from tk.log.log import get_logger, get_file_path_list, set_logger_property, CustomizedRotatingFileHandler, \
+from mindpet.log.log import get_logger, get_file_path_list, set_logger_property, CustomizedRotatingFileHandler, \
     LOG_RECORD_MAX_LEN
-from tk.log.log_utils import log_args_black_list_characters_replace, wrap_local_working_directory, const
-from tk.utils.exceptions import MakeDirError, UnsupportedPlatformError, PathOwnerError, PathModeError
-from tk.utils.constants import DEFAULT_MAX_LOG_FILE_NUM, EMPTY_STRING
+from mindpet.log.log_utils import log_args_black_list_characters_replace, wrap_local_working_directory, const
+from mindpet.utils.exceptions import MakeDirError, UnsupportedPlatformError, PathOwnerError, PathModeError
+from mindpet.utils.constants import DEFAULT_MAX_LOG_FILE_NUM, EMPTY_STRING
 
 MODE640 = 0o640
 

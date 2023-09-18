@@ -10,9 +10,9 @@ import unittest
 import unittest.mock as mock
 import pytest
 import yaml
-from tk.utils.constants import DEFAULT_FLAGS, DEFAULT_MODES
-from tk.task.evaluate_infer.evaluate_infer_task import EvaluateInferTask
-from tk.utils.exceptions import ReadYamlFileError, CreateProcessError, TaskError, MonitorProcessRspError, \
+from mindpet.utils.constants import DEFAULT_FLAGS, DEFAULT_MODES
+from mindpet.task.evaluate_infer.evaluate_infer_task import EvaluateInferTask
+from mindpet.utils.exceptions import ReadYamlFileError, CreateProcessError, TaskError, MonitorProcessRspError, \
     PathRightEscalationError, UnexpectedError
 
 logging.getLogger().setLevel(logging.INFO)

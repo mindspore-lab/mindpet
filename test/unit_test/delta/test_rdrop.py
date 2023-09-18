@@ -5,16 +5,15 @@
 import logging
 import os
 import unittest
-
+import argparse
 import mindspore
 import numpy
 import pytest
 from mindspore import Tensor
 
-from tk.delta.r_drop import rdrop_repeat, RDropLoss
+from mindpet.delta.r_drop import rdrop_repeat, RDropLoss
 
 logging.getLogger().setLevel(logging.INFO)
-mindspore.set_context(device_id=1)
 
 class TestRDrop(unittest.TestCase):
     def test_repeat_success(self):
@@ -53,4 +52,8 @@ class TestRDrop(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--device_id', type=int, default=0)
+    args = parser.parse_args()
+    mindspore.set_context(device_id=args.device_id)
     pytest.main(["-s", os.path.abspath(__file__)])

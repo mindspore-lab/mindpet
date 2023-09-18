@@ -6,7 +6,7 @@ import os
 import logging
 import unittest
 import operator
-
+import argparse
 import mindspore
 
 import numpy
@@ -15,10 +15,9 @@ from mindspore import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import One
 
-from tk.delta.low_rank_adapter import LowRankAdapterDense, LowRankAdapterLayer
+from mindpet.delta.low_rank_adapter import LowRankAdapterDense, LowRankAdapterLayer
 
 logging.getLogger().setLevel(logging.INFO)
-mindspore.set_context(device_id=1)
 
 class TestLowRankAdapterDense(unittest.TestCase):
     # _check_origin_params
@@ -1031,4 +1030,8 @@ class TestLowRankAdapterLayer(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--device_id', type=int, default=0)
+    args = parser.parse_args()
+    mindspore.set_context(device_id=args.device_id)
     pytest.main(["-s", os.path.abspath(__file__)])

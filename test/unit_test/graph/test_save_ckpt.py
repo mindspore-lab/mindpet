@@ -24,8 +24,8 @@ import mindspore.dataset.vision.c_transforms as CV
 from mindspore.dataset.vision import Inter
 from mindspore import dtype as mstype, LossMonitor, Model, CheckpointConfig
 
-from tk.graph.ckpt_util import TrainableParamsCheckPoint
-from tk.utils.exceptions import AbsolutePathError, LinkPathError
+from mindpet.graph.ckpt_util import TrainableParamsCheckPoint
+from mindpet.utils.exceptions import AbsolutePathError, LinkPathError
 
 logging.getLogger().setLevel(logging.INFO)
 

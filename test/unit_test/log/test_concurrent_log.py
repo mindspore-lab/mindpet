@@ -11,8 +11,8 @@ from unittest import TestCase
 import multiprocessing
 import pytest
 
-from tk.log.log import get_logger
-from tk.log.log_utils import get_env_info
+from mindpet.log.log import get_logger
+from mindpet.log.log_utils import get_env_info
 
 CONFIG_TEST_BASE_DIR = os.path.expanduser('~/.cache/Huawei/mxTuningKit/log')
 

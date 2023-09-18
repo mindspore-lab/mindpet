@@ -10,8 +10,8 @@ import unittest
 import unittest.mock as mock
 import click
 import pytest
-from tk.utils.exceptions import MakeDirError
-from tk.utils.task_utils import timeout_monitor, create_output_path_subdir_with_uuid, model_config_keys_check_item, \
+from mindpet.utils.exceptions import MakeDirError
+from mindpet.utils.task_utils import timeout_monitor, create_output_path_subdir_with_uuid, model_config_keys_check_item, \
     model_config_params_check_item, extend_model_config_freeze_command, handle_exception_log
 
 logging.getLogger().setLevel(logging.INFO)

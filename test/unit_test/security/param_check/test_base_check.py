@@ -6,8 +6,8 @@ import os
 import logging
 import unittest
 import pytest
-from tk.security.param_check.base_check import BaseCheckParam, BaseCheck
-from tk.utils.constants import DEFAULT_FLAGS, DEFAULT_MODES
+from mindpet.security.param_check.base_check import BaseCheckParam, BaseCheck
+from mindpet.utils.constants import DEFAULT_FLAGS, DEFAULT_MODES
 
 logging.getLogger().setLevel(logging.INFO)
 

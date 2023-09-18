@@ -12,8 +12,8 @@ from fnmatch import fnmatch
 
 import pytest
 from mindspore import nn
-from tk.graph.freeze_utils import freeze_modules, freeze_delta, freeze_from_config
-from tk.utils.exceptions import ModelConfigFreezeInfoError
+from mindpet.graph.freeze_utils import freeze_modules, freeze_delta, freeze_from_config
+from mindpet.utils.exceptions import ModelConfigFreezeInfoError
 
 logging.getLogger().setLevel(logging.INFO)
 

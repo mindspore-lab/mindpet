@@ -10,9 +10,9 @@ import unittest
 import logging
 import yaml
 import pytest
-from tk.utils.constants import DEFAULT_FLAGS, DEFAULT_MODES, EMPTY_STRING
-from tk.utils.io_utils import read_json_file, read_yaml_file
-from tk.utils.exceptions import LinkPathError
+from mindpet.utils.constants import DEFAULT_FLAGS, DEFAULT_MODES, EMPTY_STRING
+from mindpet.utils.io_utils import read_json_file, read_yaml_file
+from mindpet.utils.exceptions import LinkPathError
 
 logging.getLogger().setLevel(logging.INFO)
 

@@ -1463,6 +1463,169 @@ class BertClsModel(BaseModel):
 
 
 
+## 七、Prompt-Tuning算法
+
+
+
+
+### 7.1 算法介绍
+
+Prompt-Tuning算法通过为文本任务的输入前缀提示信息Prompt，无需修改上游预训练模型参数，即能实现下游任务的微调。前缀Prompt并非来自人工标注，而是由深度神经网络表示，对每一个下游任务，在微调时只需要冻结预训练权重，额外训练Prompt部分的参数即可。
+
+算法原理如下图所示，算法具体细节可参考相关论文[The Power of Scale for Parameter-Efficient Prompt Tuning](https://arxiv.org/abs/2104.08691)。
+
+<center>    <img style="border-radius: 0.3125em;  zoom: 80%;   box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"     src="image/prompt_tuning.png">    <br>    <div style="color:orange; border-bottom: 1px solid #d9d9d9;    display: inline-block;    color: #999;    padding: 2px; ">Prompt-Tuning算法原理图: 对于每个下游任务，给输入添加前缀信息，冻结预训练模型参数，只训练这些前缀。</div> </center>
+
+
+
+
+### 7.2 API接口 
+
+#### PromptTuning
+
+```python
+class tk.delta.prompt_tuning.PromptTuning(num_virtual_tokens,
+                                          token_dim,
+                                          num_transformer_submodules)
+```
+
+**参数**
+
+- **num_virtual_tokens**(int) - 提示词缀标记的长度。
+- **token_dim**(int）- embedding后每个标记对应向量的维度，与原模型hidden_size一致。
+- **num_transformer_submodules**(int) - 原模型中transformer子模块的个数，默认为1。
+
+
+**输入**
+
+shape为 `(batch_size, num_virtual_tokens * num_transformer_submodules)` 的Tensor。参数中的 `batch_size` 应等于模型参数中的 `batch_size` 。
+
+**输出**
+
+shape为 `(batch_size, num_virtual_tokens * num_transformer_submodules, token_dim)` 的Tensor 。参数中的 `batch_size`、`token_dim`应等于模型参数中的 `batch_size`、`hidden_size`。
+
+
+
+**异常**
+
+- **TypeError** - `num_virtual_tokens`不是正整数。
+- **TypeError** - `token_dim`不是正整数。
+- **TypeError** - `num_transformer_submodules`不是正整数。
+
+
+
+
+### 7.3 使用样例
+
+通过以下步骤将模型经过Embedding层后的输入向量与PromptTuning模块输出的向量进行拼接，并冻结预训练网络参数进行训练：
+
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
+
+2）在模型的主体结构中，从工具包引入`PromptTuning`类，初始化PromptTuning模块和用于输入模块的prompt_ids，并在模型construct中，将prompt_output拼接至原模型的embedding_output之前，裁剪至原Tensor长度后替换原模型embedding_output。此外，根据不同模型的输入，对例如input_ids等Tensor进行类似拼接替换操作。PromptTuning相关参数可参考API接口自行指定。如果进行分布式训练，可调用`shard`方法指定分布式策略。
+
+```python
+from tk.delta import PromptTuning
+# original ModelClass
+def __init__(self, **kwargs):
+    # add promttuning initialization
+    self.prompt_cell = PromptTuning(num_virtual_tokens=20, token_dim=4096, num_transformer_submodules=1)
+    self.prompt_ids = Tensor(list(range(0, num_virtual_tokens * num_transformer_submodules)), dtype=mstype.int32)
+    self.prompt_ids = self.expand_dims(self.prompt_ids, 0)
+    # if distributed training is required, invoke shard method
+    self.tile = P.Tile().shard(((1, 1),))
+    self.concat = P.Concat(axis=1).shard(((config.parallel_config.data_parallel, 1, 1), (config.parallel_config.data_parallel, 1, 1)))
+    self.slice = P.StridedSlice().shard(((config.parallel_config.data_parallel, 1, 1),))
+
+def construct(self, input_ids, embedding_output, **kwargs):
+    # get prompt embedding output
+    prompt_ids = self.tile(self.prompt_ids, (batch_size, 1))
+    prompt_output = self.cast(self.prompt_cell(prompt_ids), mstype.float16)
+    # concat prompt_output and embedding_output
+    embedding_output = self.concat((prompt_output, embedding_output))
+    embedding_output = self.slice(embedding_output,
+                                  (0, 0, 0),
+                                  (batch_size, seq_length, self.hidden_size),
+                                  (1, 1, 1))
+```
+
+3）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除`PromptTuning`模块外其它原模型权重。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
+
+```Python
+from tk.graph import freeze_delta
+
+# freeze all cells except LoRA and head
+freeze_delta(model=network, mode='prompttuning')
+```
+
+然后从工具包中引入`TrainableParamsCheckPoint`类，将保存ckpt的类改为`TrainableParamsCheckPoint`，仅保存需要更新的参数，可节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+
+由于微调后只保存了部分参数，推理时具体如何加载ckpt请参考[附录A](###A 分布式微调后模型评估方法)。
+
+```python
+from tk.graph import TrainableParamsCheckPoint
+
+# original callback
+# ckpt_callback = ModelCheckpoint(...)
+
+# replace ModelCheckpoint with TrainableParamsCheckPoint
+ckpt_callback = TrainableParamsCheckPoint(...)
+```
+
+
+
+### 7.4 实验效果
+
+下面实验基于Mindspore/Mindformers开源仓中的[llama](https://gitee.com/mindspore/mindformers/blob/dev/docs/model_cards/llama.md)复现。
+
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-54sw" rowspan="2">模型</th>
+    <th class="tg-54sw" rowspan="2">下游任务</th>
+    <th class="tg-54sw" rowspan="2">模式</th>
+    <th class="tg-54sw" colspan="5">训练参数</th>
+    <th class="tg-54sw" rowspan="2">微调参数占比</th>
+    <th class="tg-54sw" rowspan="2">静态内存+动态内存</th>
+    <th class="tg-54sw" rowspan="2">Em/F1</th>
+  </tr>
+  <tr>
+    <th class="tg-54sw">epoch</th>
+    <th class="tg-54sw">优化器</th>
+    <th class="tg-54sw">学习率</th>
+    <th class="tg-54sw">seq_length</th>
+    <th class="tg-54sw">num_virtual_tokens</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-rcip" rowspan="2">llama_7b</td>
+    <td class="tg-rcip" rowspan="2">SQuAD</td>
+    <td class="tg-rcip">baseline</td>
+    <td class="tg-rcip">2</td>
+    <td class="tg-rcip">Adam</td>
+    <td class="tg-0ys1">3.00E-05</td>
+    <td class="tg-rcip">2048</td>
+    <td class="tg-rcip">\</td>
+    <td class="tg-rcip">100%</td>
+    <td class="tg-rcip">21976MB+8744MB</td>
+    <td class="tg-rcip">82.57/65.84</td>
+  </tr>
+  <tr>
+    <td class="tg-rcip">PromptTuning</td>
+    <td class="tg-rcip">2</td>
+    <td class="tg-rcip">Adam</td>
+    <td class="tg-0ys1">1.00E-02</td>
+    <td class="tg-rcip">2048</td>
+    <td class="tg-rcip">20</td>
+    <td class="tg-rcip">0.0095%</td>
+    <td class="tg-rcip">14184MB+5265MB</td>
+    <td class="tg-rcip">84.35/67.88</td>
+  </tr>
+</tbody>
+</table>
+
+
+
 ## 附录
 
 ### A 微调后模型评估方法

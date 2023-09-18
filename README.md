@@ -51,6 +51,7 @@ pip uninstall mindpet
 | LowRankAdapter | Compacter: Efficient low-rank hypercom plex adapter layers  | [TK_DeltaAlgorithm_README](doc/TK_DeltaAlgorithm_README.md) 第四章 |
 | BitFit         | BitFit: Simple Parameter-efficient Fine-tuning for Transformer-based Masked Language-models | [TK_DeltaAlgorithm_README](doc/TK_DeltaAlgorithm_README.md) 第五章 |
 | R_Drop         | R-Drop: Regularized Dropout for Neural Networks | [TK_DeltaAlgorithm_README](doc/TK_DeltaAlgorithm_README.md) 第六章 |
+| PromptTuning   | The Power of Scale for Parameter-Efficient Prompt Tuning | [TK_DeltaAlgorithm_README](doc/TK_DeltaAlgorithm_README.md) 第七章 |
 
 
 

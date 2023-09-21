@@ -50,7 +50,7 @@ def do_setup(packages_data):
         package_data=packages_data,
         entry_points={
             'console_scripts': [
-                'tk = tk.tk_main:cli_wrapper'
+                'mindpet = mindpet.tk_main:cli_wrapper'
             ],
         },
         cmdclass=cmd_class
@@ -59,7 +59,7 @@ def do_setup(packages_data):
 
 if __name__ == '__main__':
     package_data = {
-        'tk': [
+        'mindpet': [
             '*.py',
             '*/*.py',
             '*/*/*.py',

@@ -7,10 +7,10 @@ import shutil
 import os.path
 import unittest
 import pytest
-from tk.task.finetune.finetune_task import FinetuneTask
-from tk.security.param_check.model_config_params_check_util import ModelConfigParamsChecker
-from tk.utils.exceptions import ModelConfigParamsInfoError
-from tk.utils.constants import MODEL_CONFIG_LEN_LIMIT, MODEL_CONFIG_PARAMS_CHARACTER_BLACKLIST
+from mindpet.task.finetune.finetune_task import FinetuneTask
+from mindpet.security.param_check.model_config_params_check_util import ModelConfigParamsChecker
+from mindpet.utils.exceptions import ModelConfigParamsInfoError
+from mindpet.utils.constants import MODEL_CONFIG_LEN_LIMIT, MODEL_CONFIG_PARAMS_CHARACTER_BLACKLIST
 
 logging.getLogger().setLevel(logging.INFO)
 

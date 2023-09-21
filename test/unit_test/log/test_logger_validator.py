@@ -8,8 +8,8 @@ import copy
 import logging
 from unittest import TestCase
 import pytest
-import tk.log.log as ac
-from tk.log.log import validate_file_input_format
+import mindpet.log.log as ac
+from mindpet.log.log import validate_file_input_format
 
 LOG_STD_INPUT_PARAM = {
     'to_std': True,

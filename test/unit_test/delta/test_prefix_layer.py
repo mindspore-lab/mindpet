@@ -7,13 +7,11 @@ import os
 import shutil
 import unittest
 import pytest
-
+import argparse
 import mindspore
 
-from tk.delta.prefix_layer import PrefixLayer
-from tk.utils.constants import DEFAULT_MODES, DEFAULT_FLAGS
-
-mindspore.set_context(device_id=1)
+from mindpet.delta.prefix_layer import PrefixLayer
+from mindpet.utils.constants import DEFAULT_MODES, DEFAULT_FLAGS
 
 logging.getLogger().setLevel(logging.INFO)
 LOCAL_PATH = os.path.join('/', 'tmp', 'ut').replace('\\', '/')
@@ -183,4 +181,8 @@ class TestPrefixLayer(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--device_id', type=int, default=0)
+    args = parser.parse_args()
+    mindspore.set_context(device_id=args.device_id)
     pytest.main(["-s", os.path.abspath(__file__)])

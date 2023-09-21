@@ -9,10 +9,10 @@ import stat
 import json
 import unittest
 import pytest
-from tk.utils.constants import SPACE_CHARACTER, PATH_MODE_LIMIT
-from tk.security.param_check.option_check_utils import PathContentCheckParam
-from tk.task.evaluate_infer.result_file_check import ResultFileCheckParam, ResultFileCheck
-from tk.utils.exceptions import LinkPathError, FileOversizeError, PathRightEscalationError
+from mindpet.utils.constants import SPACE_CHARACTER, PATH_MODE_LIMIT
+from mindpet.security.param_check.option_check_utils import PathContentCheckParam
+from mindpet.task.evaluate_infer.result_file_check import ResultFileCheckParam, ResultFileCheck
+from mindpet.utils.exceptions import LinkPathError, FileOversizeError, PathRightEscalationError
 
 
 class TestEvaluateResultCheck(unittest.TestCase):

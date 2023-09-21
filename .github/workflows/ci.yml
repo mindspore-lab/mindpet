@@ -31,7 +31,7 @@ jobs:
         pip install -r requirements/ci_requirements.txt
     - name: Analysing the code with pylint
       run: |
-        pylint tk --rcfile=.github/pylint.conf
+        pylint mindpet --rcfile=.github/pylint.conf
     - name: Test with unit test (UT) pytest
       run: |
         pytest test/unit_test

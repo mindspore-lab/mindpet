@@ -7,8 +7,8 @@ import os
 import shutil
 import unittest
 import pytest
-import tk.tk_sdk as sdk
-from tk.utils.constants import DEFAULT_FLAGS, DEFAULT_MODES
+import mindpet.tk_sdk as sdk
+from mindpet.utils.constants import DEFAULT_FLAGS, DEFAULT_MODES
 
 
 class TestTkSdk(unittest.TestCase):

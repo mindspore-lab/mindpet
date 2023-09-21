@@ -7,11 +7,11 @@ import shutil
 import unittest
 import logging
 import pytest
-from tk.utils.entrance_monitor import entrance_monitor
-from tk.utils.constants import ENTRANCE_TYPE, DEFAULT_MODES, DEFAULT_FLAGS, BLACKLIST_CHARACTERS, GB_SIZE
-from tk.utils.exceptions import FileOversizeError, LinkPathError, AbsolutePathError, PathContentError, \
+from mindpet.utils.entrance_monitor import entrance_monitor
+from mindpet.utils.constants import ENTRANCE_TYPE, DEFAULT_MODES, DEFAULT_FLAGS, BLACKLIST_CHARACTERS, GB_SIZE
+from mindpet.utils.exceptions import FileOversizeError, LinkPathError, AbsolutePathError, PathContentError, \
     FileNameLengthError, PathLengthError, PathGranularityError, PathRightEscalationError, LowDiskFreeSizeRiskError
-from tk.security.param_check.option_check_utils import OptionBase, PathContentBlacklistCharactersCheck, \
+from mindpet.security.param_check.option_check_utils import OptionBase, PathContentBlacklistCharactersCheck, \
     AbsolutePathCheck, PathExistCheck, LinkPathCheck, PathContentLengthCheck, PathContentCharacterCheck, \
     PathGranularityCheck, PathRightEscalationCheck, FileSizeCheck, InteractionByEntrance, DiskFreeSpaceCheck, \
     get_real_path

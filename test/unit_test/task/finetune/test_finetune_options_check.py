@@ -6,9 +6,9 @@ import logging
 import os
 import unittest
 import pytest
-from tk.task.finetune.finetune_options_check import FinetuneOptionsCheck, FinetuneOptionsCheckParam
-from tk.security.param_check.option_check_utils import PathLengthCheckParam, PathContentCheckParam
-from tk.utils.constants import DEFAULT_PATH_LEN_MIN_LIMIT, DEFAULT_PATH_LEN_MAX_LIMIT, PATH_MODE_LIMIT, \
+from mindpet.task.finetune.finetune_options_check import FinetuneOptionsCheck, FinetuneOptionsCheckParam
+from mindpet.security.param_check.option_check_utils import PathLengthCheckParam, PathContentCheckParam
+from mindpet.utils.constants import DEFAULT_PATH_LEN_MIN_LIMIT, DEFAULT_PATH_LEN_MAX_LIMIT, PATH_MODE_LIMIT, \
     DEFAULT_FLAGS, DEFAULT_MODES, DEFAULT_FILE_LEN_MIN_LIMIT, DEFAULT_FILE_LEN_MAX_LIMIT
 
 

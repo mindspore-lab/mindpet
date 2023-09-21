@@ -5,6 +5,7 @@
 import os 
 import logging
 import unittest
+import argparse
 
 import mindspore
 import numpy as np
@@ -12,11 +13,10 @@ import pytest
 from mindspore import dtype as mstype
 from mindspore.common.tensor import Tensor
 
-from tk.delta.adapter import AdapterDense
-from tk.delta.adapter import AdapterLayer
+from mindpet.delta.adapter import AdapterDense
+from mindpet.delta.adapter import AdapterLayer
 
 logging.getLogger().setLevel(logging.INFO)
-mindspore.set_context(device_id=1)
 
 class TestAdapter(unittest.TestCase):
     # _check_in_channels
@@ -393,5 +393,9 @@ class TestAdapterLayer(unittest.TestCase):
         logging.info('Finish test_shard_with_invalid_type_strategy')
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--device_id', type=int, default=0)
+    args = parser.parse_args()
+    mindspore.set_context(device_id=args.device_id)
     pytest.main(["-s", os.path.abspath(__file__)])
  

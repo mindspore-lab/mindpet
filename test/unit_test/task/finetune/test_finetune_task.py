@@ -9,9 +9,9 @@ import unittest
 from unittest import mock
 import pytest
 import yaml
-from tk.task.finetune.finetune_task import FinetuneTask
-from tk.utils.constants import DEFAULT_FLAGS, DEFAULT_MODES
-from tk.utils.exceptions import PathLoopError, ReadYamlFileError, ModelConfigKeysInfoError, \
+from mindpet.task.finetune.finetune_task import FinetuneTask
+from mindpet.utils.constants import DEFAULT_FLAGS, DEFAULT_MODES
+from mindpet.utils.exceptions import PathLoopError, ReadYamlFileError, ModelConfigKeysInfoError, \
     ModelConfigParamsInfoError, TaskError, CreateProcessError, MonitorProcessRspError, UnexpectedError
 
 logging.getLogger().setLevel(logging.INFO)

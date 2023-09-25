@@ -87,7 +87,7 @@ class PrefixEncoder(nn.Cell):
         self.cast = P.Cast()
 
     def construct(self, batch_size, dtype=mstype.half):
-	    """
+        """
         new prefix
         """
         prefix_tokens = self.expand_dims(self.tk_delta_ptuning2_prefix, 0)

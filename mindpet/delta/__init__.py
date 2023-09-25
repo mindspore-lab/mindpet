@@ -6,7 +6,8 @@ from mindpet.delta.lora import LoRADense
 from mindpet.delta.prefix_layer import PrefixLayer
 from mindpet.delta.low_rank_adapter import LowRankAdapterDense, LowRankAdapterLayer
 from mindpet.delta.adapter import AdapterDense, AdapterLayer
+from mindpet.delta.ptuning2 import PrefixEncoder
 from mindpet.delta.r_drop import RDropLoss, rdrop_repeat
 
 __all__ = ['LoRADense', 'PrefixLayer', 'LowRankAdapterDense', 'LowRankAdapterLayer',
-           'AdapterDense', 'AdapterLayer', 'RDropLoss', 'rdrop_repeat']
+           'AdapterDense', 'AdapterLayer', 'RDropLoss', 'rdrop_repeat', 'PrefixEncoder']

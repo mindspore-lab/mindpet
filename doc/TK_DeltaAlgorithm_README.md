@@ -1462,6 +1462,199 @@ class BertClsModel(BaseModel):
 
 
 
+## 七、P-Tuning v2算法
+
+### 7.1 算法介绍
+
+P-Tuning v2该方法将可训练的连续提示向量独立添加到每个transformer层的输入中，只训练这部分任务相关的向量，保持预训练模型的参数不变。P-Tuning v2会在每个transformer层的key和value向量的前面插入l个用于更新参数的连续提示向量，然后冻结预训练模型的参数， 只更新这些向量的参数，就可以达到近似全参微调的效果。 
+
+
+算法原理如下图所示，算法具体实现细节可参考论文[P-Tuning v2: Prompt Tuning Can Be Comparable to Fine-tuning Universally Across Scales and Tasks](https://arxiv.org/abs/2110.07602)
+
+<center>    <img style="border-radius: 0.3125em;  zoom: 50%;   box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"     
+src="image/ptuning2.png"><br>    <div style="color:orange; border-bottom: 1px solid #d9d9d9;    display: inline-block;    color: #999;    padding: 2px; ">
+P-Tuning v2算法原理图: 对于每个下游任务，在网络的每一层添加一份连续提示向量，冻结预训练模型的其他参数，只训练这些向量。
+</div> </center>
+
+
+
+### 7.2 API接口
+
+``` python
+ class PrefixEncoder(pre_seq_len,
+                     num_layers,
+                     num_heads,
+                     kv_channels,
+                     prefix_projection,
+                     projection_dim,
+                     dropout_prob):
+```
+
+定义PrefixEncoder层
+
+
+
+**参数**
+
+- **pre_seq_len**(int) - 网络每层提示向量的长度.
+- **num_layers**(int) - 网络层数，与原模型参数一致。
+- **num_heads**(int) - 多头注意力头数，与原模型参数一致。
+- **kv_channels**(int) - `key`、`value`隐藏维度，与原模型参数一致。
+- **prefix_projection**(bool) - 是否使用MLP表征。
+- **projection_dim**(int) - MLP维度。
+- **dropout_prob**(float) - 丢弃率。
+
+
+
+**异常**
+
+- **TypeError** - `pre_seq_len`不是正整数。
+- **TypeError** - `num_layers`不是正整数。
+- **TypeError** - `num_heads`不是正整数。
+- **TypeError** - `kv_channels`不是正整数。
+- **TypeError** - `projection_dim`不是正整数。
+- **ValueError** - `dropout_prob`不在[0,1)之内。
+
+
+
+### 7.3 使用样例
+
+通过以下步骤将模型结构中`key`、`value`和`attention_mask`修改为新的`key`、`value`和`attention_mask`，冻结网络进行训练：
+
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
+
+2）在模型的初始化时，从工具包中引入`PrefixEncoder`类，创建`prefixEncoder`，在`construct`时构造提示向量传递给网络的每层。
+
+```python
+class ChatModelWithPt2(ChatModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.prefix_encoder = PrefixEncoder(
+            config.pet_config.pre_seq_len,
+            config.pet_config.num_layers,
+            config.pet_config.num_heads,
+            config.pet_config.kv_channels,
+            config.pet_config.prefix_projection,
+            config.pet_config.projection_dim,
+            config.pet_config.dropout_prob
+        )
+        ...
+
+    def construct(self, ...):
+        prefix_key_values = self.prefix_encoder(batch_size)
+        return super().construct(..., prefix_key_values)
+```
+
+3）在模型的Attention结构中，将`prefixlayer`构造的每层`prefix_key_value`矩阵与原`key`、`value`矩阵进行`concat`操作。然后定义全为1的`help`矩阵，将原`attention_mask`矩阵与`help`矩阵进行`concat`（新的`attention_mask`矩阵shape与新的`query`*`key`矩阵的shape相同）。
+
+```python
+#模型的Attention层
+class SelfAttention(nn.Cell):
+   def add_prefix(prefix_key_value, pre_seq_len, key, value, attention_mask):
+        # [bs, num_heads, seq_length, head_dim]
+        seq_len = key.shape[2]
+
+        # [bs, num_heads, pre_seq_len, head_dim]
+        prefix_key = prefix_key_value[0]
+        prefix_value = prefix_key_value[1]
+        cat = P.Concat(2)
+        key = cat([prefix_key, key])
+        value = cat([prefix_value, value])
+        
+        batch_size = attention_mask.shape[0]
+        prefix_mask = attention_mask.new_ones((batch_size, 1, seq_len, pre_seq_len))
+        m_cat = P.Concat(3)
+
+        # [bs, 1, seq_len, pre_seq_len + seq_len]
+        attention_mask = m_cat((prefix_mask, attention_mask))
+
+        return key, value, attention_mask
+  
+    def construct(self, input_tensor, attention_mask):
+        ...
+        ...
+        key_layer, value_layer, attention_mask = self.add_prefix(
+            prefix_key_value,
+            self.pre_seq_len,
+            key_layer,
+            value_layer,
+            attention_mask
+        )
+        context_layer = self.attention(query_layer, key_layer, value_layer, attention_mask)
+        ...
+```
+
+4）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除`Prefix`矩阵外其它原模型权重。注意，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《TK_GraphOperation_README.md》第一章](TK_GraphOperation_README.md)）
+
+```Python
+# freeze all cell except ptuning2
+freeze_delta(model=network, mode='ptuning2')
+```
+
+然后从工具包中引入`TrainableParamsCheckPoint`类，将保存ckpt的类改为`TrainableParamsCheckPoint`，仅保存需要更新的参数，可节约存储空间。（[详细方法参考《TK_GraphOperation_README.md》第二章](TK_GraphOperation_README.md)）
+
+由于微调后只保存了部分参数，推理时具体如何加载ckpt请参考[附录A](###A 分布式微调后模型评估方法)。
+
+```python
+# original callback
+# ckpt_callback = ModelCheckpoint(...)
+
+# replace ModelCheckpoint with TrainableParamsCheckPoint
+ckpt_callback = TrainableParamsCheckPoint(...)
+```
+
+
+
+### 7.4 实验效果
+
+下面实验基于MindFormers开源仓中的[**GLM2-6B**](https://gitee.com/mindspore/mindformers/blob/dev/docs/model_cards/glm2.md)复现。
+
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-54sw" rowspan="2">模型</th>
+    <th class="tg-54sw" rowspan="2">下游任务</th>
+    <th class="tg-54sw" rowspan="2">模式</th>
+    <th class="tg-54sw" colspan="4">训练参数</th>
+    <th class="tg-54sw" rowspan="2">微调参数占比</th>
+    <th class="tg-54sw" rowspan="2">静态内存+动态内存</th>
+    <th class="tg-54sw" rowspan="2">rouge-1</th>
+  </tr>
+  <tr>
+    <th class="tg-54sw">epoch</th>
+    <th class="tg-54sw">优化器</th>
+    <th class="tg-54sw">学习率</th>
+    <th class="tg-54sw">pre_seq_num</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-rcip" rowspan="2">glm2-6m</td>
+    <td class="tg-rcip" rowspan="2">language modeling</td>
+    <td class="tg-rcip">baseline</td>
+    <td class="tg-rcip">1</td>
+    <td class="tg-rcip">Adamw</td>
+    <td class="tg-0ys1">1.00E-04</td>
+    <td class="tg-rcip">\</td>
+    <td class="tg-rcip">100%</td>
+    <td class="tg-rcip">60056MB+92141MB</td>
+    <td class="tg-rcip">30.7</td>
+  </tr>
+  <tr>
+    <td class="tg-rcip">p-tuning v2</td>
+    <td class="tg-rcip">1</td>
+    <td class="tg-rcip">Adamw</td>
+    <td class="tg-0ys1">5.00E-03</td>
+    <td class="tg-rcip">128</td>
+    <td class="tg-rcip">0.03%</td>
+    <td class="tg-rcip">12992MB+35588MB</td>
+    <td class="tg-rcip">31.5</td>
+  </tr>
+</tbody>
+</table>
+
+
+
 
 ## 附录
 

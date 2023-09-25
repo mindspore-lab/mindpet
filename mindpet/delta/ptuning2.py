@@ -17,11 +17,12 @@ p-tuning-v2
 Reference: https://arxiv.org/pdf/2110.07602.pdf
 """
 
-import mindspore as ms
-import mindspore.nn as nn
 import numpy as np
 
+import mindspore as ms
+
 from mindspore import dtype as mstype
+from mindspore import nn
 from mindspore.ops import operations as P
 
 from mindpet.utils.version_control import get_dropout
@@ -30,7 +31,7 @@ try:
     from mindspore._checkparam import Validator, Rel
 
     INC_LEFT = Rel.INC_LEFT
-except:
+except ImportError:
     import mindspore._checkparam as Validator
 
     INC_LEFT = Validator.INC_LEFT
@@ -86,6 +87,9 @@ class PrefixEncoder(nn.Cell):
         self.cast = P.Cast()
 
     def construct(self, batch_size, dtype=mstype.half):
+	    """
+        new prefix
+        """
         prefix_tokens = self.expand_dims(self.tk_delta_ptuning2_prefix, 0)
         prefix_tokens = self.tile(prefix_tokens, (batch_size, 1))
 

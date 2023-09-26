@@ -20,7 +20,7 @@ mkdir dataset outputs pretrained_models ckpt
 
 chmod 750 dataset outputs ckpt eval_launcher.py model_config_eval.yaml
 
-tk evaluate --data_path $TEST_PATH/dataset/ --ckpt_path $TEST_PATH/ckpt/ --output_path $TEST_PATH/outputs/  \
+mindpet evaluate --data_path $TEST_PATH/dataset/ --ckpt_path $TEST_PATH/ckpt/ --output_path $TEST_PATH/outputs/  \
 --model_config_path $TEST_PATH/model_config_eval.yaml  --boot_file_path $TEST_PATH/eval_launcher.py
 """
 

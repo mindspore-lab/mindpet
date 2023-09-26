@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
-
+"""Utils Constants"""
 import os
 import stat
 
@@ -77,8 +77,8 @@ HOURS_PER_DAY = 24
 # 命令行模式异常退出状态码
 ABNORMAL_EXIT_CODE = 1
 
-# tk定义入参
-TK_DEFINED_PARAM_NAME = (
+# MindPet定义入参
+MINDPET_DEFINED_PARAM_NAME = (
     'dp', 'data_path', 'op', 'output_path', 'bp', 'boot_file_path', 'mc', 'model_config_path', 'pm',
     'pretrained_model_path', 'cp', 'ckpt_path', 'q', 'quiet', 't', 'timeout', 'advanced_config')
 
@@ -101,8 +101,7 @@ INFER_TASK_NAME = 'infer'
 EVAL_INFER_TASK_NAMES = [EVALUATE_TASK_NAME, INFER_TASK_NAME]
 
 # 微调工具包SDK接口清单
-TK_SDK_INTERFACE_NAMES = [FINETUNE_TASK_NAME, EVALUATE_TASK_NAME, INFER_TASK_NAME]
+MINDPET_SDK_INTERFACE_NAMES = [FINETUNE_TASK_NAME, EVALUATE_TASK_NAME, INFER_TASK_NAME]
 
 # 微调算法清单
 DELTA_LIST = ['lora', 'prefixtuning', 'adapter', 'low_rank_adapter', 'bitfit']
-

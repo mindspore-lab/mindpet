@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
-
+"""boot file path option"""
 import os
 import click
 from click.exceptions import MissingParameter, BadParameter
@@ -11,6 +11,7 @@ from mindpet.task.options.path_check_param import default_file_length_check_para
 
 
 class BootFilePathOption(click.core.Option):
+    """BootFilePathOption class"""
     def __init__(self):
         super().__init__(
             param_decls=('-bp', '--boot_file_path'),

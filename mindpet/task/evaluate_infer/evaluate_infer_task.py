@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved."""
 
 import os
 import json
@@ -19,6 +19,7 @@ from mindpet.utils.exceptions import LinkPathError, ReadYamlFileError, Unexpecte
 
 
 class EvaluateInferTask:
+    """EvaluateInferTask class"""
     def __init__(self, task_type, *args, **kwargs):
         """
         评估/推理任务构造方法
@@ -40,29 +41,30 @@ class EvaluateInferTask:
             self._process_param_and_command()
         except KeyboardInterrupt as ex:
             record_operation_and_service_error_log(
-                '{} task is terminated by current user, task has stopped and exited.'.format(
-                    str(self.task_type).capitalize()))
+                f'{str(self.task_type).capitalize()} task is terminated by current user, task has stopped and exited.')
             raise ex
         except Exception as ex:
-            record_operation_and_service_error_log('{} failed.'.format(str(self.task_type).capitalize()))
+            record_operation_and_service_error_log(f'{str(self.task_type).capitalize()} failed.')
             raise ex
 
+    # pylint: disable=R1732
     def start(self):
         """
         启动命令
         :return: 评估/推理JSON形式结果
         """
         # 启动评估/推理任务
-        record_operation_and_service_info_log('{} task is running.'.format(str(self.task_type).capitalize()))
+        record_operation_and_service_info_log(
+            f'{str(self.task_type).capitalize()} task is running.')
 
         try:
             process = subprocess.Popen(self.command, env=os.environ, shell=False,
                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         except KeyboardInterrupt as ex:
             record_operation_and_service_error_log(
-                '{} task is terminated by current user, task has stopped and exited.'.format(
-                    str(self.task_type).capitalize()))
+                f'{str(self.task_type).capitalize()} task is terminated by current user, task has stopped and exited.')
             raise ex
+
         except Exception as ex:
             if ex is None or not str(ex):
                 raise CreateProcessError(f'Exception occurred when creating {self.task_type} task process, '
@@ -76,8 +78,7 @@ class EvaluateInferTask:
                                                 timeout=self.kwargs.get('timeout'))
         except KeyboardInterrupt as ex:
             record_operation_and_service_error_log(
-                '{} task is terminated by current user, task has stopped and exited.'.format(
-                    str(self.task_type).capitalize()))
+                f'{str(self.task_type).capitalize()} task is terminated by current user, task has stopped and exited.')
             raise ex
         except Exception as ex:
             if ex is None or not str(ex):
@@ -87,21 +88,23 @@ class EvaluateInferTask:
                                          f'error message: {str(ex)}.') from ex
 
         if rsp_code != 0:
-            operation_logger_without_std.error('{} failed.'.format(str(self.task_type).capitalize()))
-            raise TaskError('{} failed.'.format(str(self.task_type).capitalize()))
+            message = f'{str(self.task_type).capitalize()} failed.'
+            operation_logger_without_std.error(message)
+            raise TaskError(message)
 
         # 获取评估结果
         result = self._get_task_result()
 
         if result.get('status') == 0:
-            record_operation_and_service_info_log('{} successfully.'.format(str(self.task_type).capitalize()))
+            record_operation_and_service_info_log(f'{str(self.task_type).capitalize()} successfully.')
         else:
             record_operation_and_service_warning_log(
                 f'Completed {self.task_type} task, but failed to get {self.result_name} file.')
-            logger.warning(f'{result.get("error_message")}')
+            logger.warning(result.get("error_message"))
 
         return result
 
+    # pylint: disable=W0718
     def _get_task_result(self):
         """
         读取并返回用户落盘的评估/推理结果
@@ -128,6 +131,7 @@ class EvaluateInferTask:
         except (json.JSONDecodeError, TypeError):
             # 文件为空但文件大小不为0、格式错误
             result["error_message"] = f'File {self.result_name} should follow JSON format.'
+        # pylint: disable=W0703
         except Exception as ex:
             result["error_message"] = f'An error occurred during reading {self.result_name}: {str(ex)}'
         else:
@@ -139,6 +143,7 @@ class EvaluateInferTask:
 
         return result
 
+    # pylint: disable=W0718
     def _get_check_result_file_error_msg(self, result_path):
         """
         获取结果文件校验结果与对应error_message
@@ -160,6 +165,7 @@ class EvaluateInferTask:
             error_message = f'Detect link path, reject reading file: {self.result_name}.'
         except ValueError:
             error_message = f'Invalid file: {self.result_name}.'
+        # pylint: disable=W0703
         except Exception as ex:
             error_message = f'An error occurred during reading {self.result_name}: {str(ex)}'
 

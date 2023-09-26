@@ -19,7 +19,7 @@ mkdir dataset outputs pretrained_models
 
 chmod 750 dataset outputs pretrained_models finetune_launcher.py model_config_finetune.yaml
 
-tk finetune --data_path $TEST_PATH/dataset/ --output_path $TEST_PATH/outputs/  \
+mindpet finetune --data_path $TEST_PATH/dataset/ --output_path $TEST_PATH/outputs/  \
 --pretrained_model_path $TEST_PATH/pretrained_models/ \
 --model_config_path $TEST_PATH/model_config_finetune.yaml --boot_file_path $TEST_PATH/finetune_launcher.py
 """

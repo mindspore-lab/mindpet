@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""path check param"""
 
 from mindpet.utils.constants import SPACE_CHARACTER
 from mindpet.security.param_check.option_check_utils import PathLengthCheckParam, PathContentCheckParam

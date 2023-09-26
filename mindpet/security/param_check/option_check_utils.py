@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""command option check utils."""
 
 import os
 from mindpet.log.log import logger
@@ -27,6 +28,7 @@ def get_real_path(path):
 
 
 class OptionBase:
+    """Define command option."""
     def __init__(self, option_name, option_value):
         """
         构造方法
@@ -58,6 +60,7 @@ class OptionBase:
 
 
 class PathLengthCheckParam:
+    """Define file path length check params."""
     def __init__(self, path_min_limit, path_max_limit, file_min_limit, file_max_limit):
         """
         路径长度校验项参数构造方法
@@ -73,6 +76,7 @@ class PathLengthCheckParam:
 
 
 class PathContentCheckParam:
+    """Define file path check params."""
     def __init__(self, base_whitelist_mode, extra_whitelist):
         """
         路径内容校验项参数构造方法
@@ -84,6 +88,7 @@ class PathContentCheckParam:
 
 
 class InteractionByEntrance(OptionBase):
+    """Define interaction."""
     def __init__(self, option_name, option_value, notice_msg, notice_accept_msg, exception_type):
         """
         根据使用入口(CLI/SDK)执行不同的交互逻辑构造方法
@@ -93,7 +98,7 @@ class InteractionByEntrance(OptionBase):
         :param notice_accept_msg: 用户接受通知消息
         :param exception_type: 异常类型
         """
-        super(InteractionByEntrance, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
 
         if notice_msg is None or notice_msg == EMPTY_STRING:
             raise ValueError('Param [notice_msg] is None or empty.')
@@ -168,18 +173,18 @@ class InteractionByEntrance(OptionBase):
         """
         if force_quit:
             raise self.exception_type(self.notice_msg)
-        else:
-            logger.warning(self.notice_msg)
+        logger.warning(self.notice_msg)
 
 
 class PathContentBlacklistCharactersCheck(OptionBase):
+    """Define path black list check"""
     def __init__(self, option_name, option_value):
         """
         路径内容黑名单字符校验构造方法
         :param option_name: 参数名称
         :param option_value: 参数值
         """
-        super(PathContentBlacklistCharactersCheck, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
         self._check()
 
     def _check(self):
@@ -194,13 +199,14 @@ class PathContentBlacklistCharactersCheck(OptionBase):
 
 
 class AbsolutePathCheck(OptionBase):
+    """Define absolute path check."""
     def __init__(self, option_name, option_value):
         """
         绝对路径校验构造方法
         :param option_name: 参数名称
         :param option_value: 参数值
         """
-        super(AbsolutePathCheck, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
         self._check()
 
     def _check(self):
@@ -212,13 +218,14 @@ class AbsolutePathCheck(OptionBase):
 
 
 class PathExistCheck(OptionBase):
+    """Define path exist check."""
     def __init__(self, option_name, option_value):
         """
         路径存在校验构造方法
         :param option_name: 参数名称
         :param option_value: 参数值
         """
-        super(PathExistCheck, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
         self._check()
 
     def _check(self):
@@ -230,13 +237,14 @@ class PathExistCheck(OptionBase):
 
 
 class LinkPathCheck(OptionBase):
+    """Define link path exist check."""
     def __init__(self, option_name, option_value):
         """
         链接路径校验构造方法
         :param option_name: 参数名称
         :param option_value: 参数值
         """
-        super(LinkPathCheck, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
         self._check()
 
     def _check(self):
@@ -248,6 +256,7 @@ class LinkPathCheck(OptionBase):
 
 
 class PathContentLengthCheck(OptionBase):
+    """Define path content option length check."""
     def __init__(self, option_name, option_value, path_min_limit, path_max_limit, file_min_limit, file_max_limit):
         """
         路径内容长度校验构造方法
@@ -270,7 +279,7 @@ class PathContentLengthCheck(OptionBase):
         if file_max_limit is not None and not isinstance(file_max_limit, int):
             raise TypeError('Invalid type for param [file_max_limit] when initializing PathContentLengthCheck.')
 
-        super(PathContentLengthCheck, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
         self._check(path_min_limit, path_max_limit, file_min_limit, file_max_limit)
 
     def _check(self, path_min_limit, path_max_limit, file_min_limit, file_max_limit):
@@ -349,6 +358,7 @@ class PathContentLengthCheck(OptionBase):
 
 
 class PathContentCharacterCheck(OptionBase):
+    """Define path content option character check."""
     def __init__(self, option_name, option_value, base_whitelist_mode, extra_whitelist):
         """
         路径内容校验构造方法
@@ -357,7 +367,7 @@ class PathContentCharacterCheck(OptionBase):
         :param base_whitelist_mode: 基础白名单模式
         :param extra_whitelist: 额外白名单列表
         """
-        super(PathContentCharacterCheck, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
 
         if base_whitelist_mode is None or base_whitelist_mode == EMPTY_STRING:
             raise ValueError('Param [base_whitelist_mode] is None or empty.')
@@ -377,8 +387,8 @@ class PathContentCharacterCheck(OptionBase):
         :param base_whitelist_mode: 模式类型，包括全大写/全小写/数字/大小写字母/大小写字母和数字
         :return: 基础白名单字符列表
         """
-        if base_whitelist_mode not in BASE_WHITELIST_CHARACTERS.keys():
-            raise ValueError('Invalid param [base_whitelist_mode], only support %s',
+        if base_whitelist_mode not in BASE_WHITELIST_CHARACTERS:
+            raise ValueError('Invalid param [base_whitelist_mode], only support %s' %
                              list(BASE_WHITELIST_CHARACTERS.keys()))
 
         return BASE_WHITELIST_CHARACTERS.get(base_whitelist_mode)
@@ -399,6 +409,7 @@ class PathContentCharacterCheck(OptionBase):
 
 
 class PathGranularityCheck(OptionBase):
+    """Define path option granular check."""
     def __init__(self, option_name, option_value, path_including_file):
         """
         路径粒度校验(文件夹/文件粒度)构造方法
@@ -406,7 +417,7 @@ class PathGranularityCheck(OptionBase):
         :param option_value: 参数值
         :param path_including_file: 路径是否包含文件名, 传None表示同时兼容
         """
-        super(PathGranularityCheck, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
 
         if path_including_file is not None and not isinstance(path_including_file, bool):
             raise TypeError('Invalid type for param [path_including_file] when initializing PathGranularityCheck.')
@@ -425,11 +436,11 @@ class PathGranularityCheck(OptionBase):
 
         if not status:
             raise PathGranularityError(
-                'Param [{}] should be a {} path.'.format(self.option_name,
-                                                         'file' if self.path_including_file else 'dir'))
+                f"Param [{self.option_name}] should be a {'file' if self.path_including_file else 'dir'} path.")
 
 
 class PathRightEscalationCheck(OptionBase):
+    """Define path right option escalation check."""
     def __init__(self, option_name, option_value, mode, force_quit, quiet):
         """
         路径权限提升校验构造方法
@@ -439,7 +450,7 @@ class PathRightEscalationCheck(OptionBase):
         :param force_quit: 异常是否强制退出
         :param quiet: 安静模式
         """
-        super(PathRightEscalationCheck, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
         self._check(mode, force_quit, quiet)
 
     @staticmethod
@@ -541,6 +552,7 @@ class PathRightEscalationCheck(OptionBase):
 
 
 class FileSizeCheck(OptionBase):
+    """Define file size check."""
     def __init__(self, option_name, option_value, path_including_file):
         """
         文件大小校验构造方法
@@ -548,7 +560,7 @@ class FileSizeCheck(OptionBase):
         :param option_value: 参数值
         :param path_including_file: 路径是否包含文件名
         """
-        super(FileSizeCheck, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
 
         if path_including_file is None:
             raise ValueError('Param [path_including_file] is None.')
@@ -569,6 +581,7 @@ class FileSizeCheck(OptionBase):
 
 
 class DiskFreeSpaceCheck(OptionBase):
+    """Define disk free space check."""
     def __init__(self, option_name, option_value, free_space_limit, force_quit, quiet):
         """
         路径所在磁盘剩余空间校验构造方法
@@ -578,7 +591,7 @@ class DiskFreeSpaceCheck(OptionBase):
         :param force_quit: 异常是否强制退出
         :param quiet: 安静模式
         """
-        super(DiskFreeSpaceCheck, self).__init__(option_name, option_value)
+        super().__init__(option_name, option_value)
 
         if free_space_limit is None:
             raise ValueError('Param [free_space_limit] is None.')
@@ -601,6 +614,7 @@ class DiskFreeSpaceCheck(OptionBase):
         info = os.statvfs(self.option_value)
         free_size = info.f_bsize * info.f_bavail
 
+        # pylint: disable=W1203
         logger.info(
             f'Disk where param {self.option_name} is located has {round(free_size / GB_SIZE, 2)} GB free space.')
 

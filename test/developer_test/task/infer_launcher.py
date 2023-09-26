@@ -20,7 +20,7 @@ mkdir dataset outputs pretrained_models ckpt
 
 chmod 750 dataset outputs ckpt infer_launcher.py model_config_infer.yaml
 
-tk infer --data_path $TEST_PATH/dataset/ --ckpt_path $TEST_PATH/ckpt/ --output_path $TEST_PATH/outputs/  \
+mindpet infer --data_path $TEST_PATH/dataset/ --ckpt_path $TEST_PATH/ckpt/ --output_path $TEST_PATH/outputs/  \
 --model_config_path $TEST_PATH/model_config_infer.yaml  --boot_file_path $TEST_PATH/infer_launcher.py
 """
 

@@ -64,12 +64,12 @@ class LowRankLinear(nn.Cell):
         self.out_channels = out_channels
         self.rank = rank
         self.weight_init = weight_init
-        self.tk_delta_low_rank_adapter_weight_left = \
+        self.mindpet_delta_low_rank_adapter_weight_left = \
             Parameter(initializer(self.weight_init, [in_channels, rank], param_init_type),
-                      name="tk_delta_low_rank_adapter_weight_left")
-        self.tk_delta_low_rank_adapter_weight_right = \
+                      name="mindpet_delta_low_rank_adapter_weight_left")
+        self.mindpet_delta_low_rank_adapter_weight_right = \
             Parameter(initializer(self.weight_init, [rank, out_channels], param_init_type),
-                      name="tk_delta_low_rank_adapter_weight_right")
+                      name="mindpet_delta_low_rank_adapter_weight_right")
         self.has_bias = has_bias
 
         self.bias = None
@@ -99,8 +99,8 @@ class LowRankLinear(nn.Cell):
         input_tensor = self.reshape(input_tensor, (-1, x_shape[-1]))
 
         # compute weight
-        weight = self.matmul_weight(self.cast(self.tk_delta_low_rank_adapter_weight_left, self.compt_dtype),
-                                    self.cast(self.tk_delta_low_rank_adapter_weight_right, self.compt_dtype))
+        weight = self.matmul_weight(self.cast(self.mindpet_delta_low_rank_adapter_weight_left, self.compt_dtype),
+                                    self.cast(self.mindpet_delta_low_rank_adapter_weight_right, self.compt_dtype))
 
         input_tensor = self.cast(input_tensor, self.compt_dtype)
         input_tensor = self.matmul_input(input_tensor, weight)
@@ -179,15 +179,15 @@ class LowRankAdapterLayer(nn.Cell):
         self.bottleneck_size = hidden_size // reduction_factor
         self.non_linearity = non_linearity
 
-        self.tk_delta_low_rank_adapter_down_sampler = LowRankLinear(in_channels=hidden_size,
+        self.mindpet_delta_low_rank_adapter_down_sampler = LowRankLinear(in_channels=hidden_size,
                                                                     out_channels=self.bottleneck_size,
                                                                     rank=low_rank_size,
                                                                     weight_init=low_rank_w_init,
                                                                     param_init_type=param_init_type,
                                                                     compute_dtype=compute_dtype)
-        self.tk_delta_low_rank_adapter_non_linear = get_activation(
+        self.mindpet_delta_low_rank_adapter_non_linear = get_activation(
             non_linearity)
-        self.tk_delta_low_rank_adapter_up_sampler = LowRankLinear(in_channels=self.bottleneck_size,
+        self.mindpet_delta_low_rank_adapter_up_sampler = LowRankLinear(in_channels=self.bottleneck_size,
                                                                   out_channels=hidden_size,
                                                                   rank=low_rank_size,
                                                                   weight_init=low_rank_w_init,
@@ -205,11 +205,11 @@ class LowRankAdapterLayer(nn.Cell):
         input_tensor = P.Reshape()(input_tensor, (-1, x_shape[-1]))
 
         # calculate adapter_out
-        adapter_down_sampler_output = self.tk_delta_low_rank_adapter_down_sampler(
+        adapter_down_sampler_output = self.mindpet_delta_low_rank_adapter_down_sampler(
             input_tensor)
-        adapter_non_linear_output = self.tk_delta_low_rank_adapter_non_linear(
+        adapter_non_linear_output = self.mindpet_delta_low_rank_adapter_non_linear(
             adapter_down_sampler_output)
-        adapter_output = self.tk_delta_low_rank_adapter_up_sampler(
+        adapter_output = self.mindpet_delta_low_rank_adapter_up_sampler(
             adapter_non_linear_output)
 
         # residual connection, add input and adapter_output
@@ -253,30 +253,30 @@ class LowRankAdapterLayer(nn.Cell):
             strategy_residual_add (tuple): The strategy for the residual_add.
         """
         try:
-            self.tk_delta_low_rank_adapter_down_sampler.shard(
+            self.mindpet_delta_low_rank_adapter_down_sampler.shard(
                 strategy_matmul_down_sampler_weight, strategy_matmul_down_sampler_input, strategy_bias_down_sampler)
-            self.tk_delta_low_rank_adapter_up_sampler.shard(
+            self.mindpet_delta_low_rank_adapter_up_sampler.shard(
                 strategy_matmul_up_sampler_weight, strategy_matmul_up_sampler_input, strategy_bias_up_sampler)
             # some operations has many primitives, need to manually set the shard
             if self.non_linearity.lower() == "leakyrelu":
-                self.tk_delta_low_rank_adapter_non_linear.select_op.shard(
+                self.mindpet_delta_low_rank_adapter_non_linear.select_op.shard(
                     (strategy_non_linearity[0], strategy_non_linearity[0]))
             elif self.non_linearity.lower() == "logsigmoid":
-                self.tk_delta_low_rank_adapter_non_linear.mul.shard(
+                self.mindpet_delta_low_rank_adapter_non_linear.mul.shard(
                     (strategy_non_linearity[0], ()))
-                self.tk_delta_low_rank_adapter_non_linear.exp.shard(
+                self.mindpet_delta_low_rank_adapter_non_linear.exp.shard(
                     strategy_non_linearity)
-                self.tk_delta_low_rank_adapter_non_linear.add.shard(
+                self.mindpet_delta_low_rank_adapter_non_linear.add.shard(
                     (strategy_non_linearity[0], ()))
-                self.tk_delta_low_rank_adapter_non_linear.rec.shard(
+                self.mindpet_delta_low_rank_adapter_non_linear.rec.shard(
                     strategy_non_linearity)
-                self.tk_delta_low_rank_adapter_non_linear.log.shard(
+                self.mindpet_delta_low_rank_adapter_non_linear.log.shard(
                     strategy_non_linearity)
             elif self.non_linearity.lower() == "logsoftmax":
                 raise ValueError("The 'LogSoftmax' function is not supported in semi auto parallel "
                                  "or auto parallel mode.")
             else:
-                getattr(self.tk_delta_low_rank_adapter_non_linear,
+                getattr(self.mindpet_delta_low_rank_adapter_non_linear,
                         self.non_linearity).shard(strategy_non_linearity)
             self.residual_add.shard(strategy_residual_add)
 
@@ -372,7 +372,7 @@ class LowRankAdapterDense(nn.Dense):
                          bias_init=bias_init,
                          has_bias=has_bias,
                          activation=activation)
-        self.tk_delta_low_rank_adapter = LowRankAdapterLayer(hidden_size=out_channels,
+        self.mindpet_delta_low_rank_adapter = LowRankAdapterLayer(hidden_size=out_channels,
                                                              reduction_factor=reduction_factor,
                                                              low_rank_size=low_rank_size,
                                                              low_rank_w_init=low_rank_w_init,
@@ -404,7 +404,7 @@ class LowRankAdapterDense(nn.Dense):
             input_tensor = self.activation(input_tensor)
 
         # calculate low_rank_adapter_out
-        input_tensor = self.tk_delta_low_rank_adapter(input_tensor)
+        input_tensor = self.mindpet_delta_low_rank_adapter(input_tensor)
 
         # recover the previous outshape and dtype
         out_shape = x_shape[:-1] + (-1,)
@@ -472,7 +472,7 @@ class LowRankAdapterDense(nn.Dense):
                         strategy_activation_org)
 
             # set low_rank_adapter strategy
-            self.tk_delta_low_rank_adapter.shard(strategy_matmul_down_sampler_weight,
+            self.mindpet_delta_low_rank_adapter.shard(strategy_matmul_down_sampler_weight,
                                                  strategy_matmul_down_sampler_input,
                                                  strategy_bias_down_sampler,
                                                  strategy_non_linearity,

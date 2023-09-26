@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""Version Control APIs"""
 import mindspore as ms
 from mindspore import nn
 from .version_utils import is_version_ge

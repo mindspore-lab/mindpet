@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""data path option"""
 
 import click
 from click.exceptions import MissingParameter
@@ -10,6 +11,7 @@ from mindpet.task.options.path_check_param import default_folder_length_check_pa
 
 
 class DataPathOption(click.core.Option):
+    """DataPathOption class"""
     def __init__(self):
         super().__init__(
             param_decls=('-dp', '--data_path'),

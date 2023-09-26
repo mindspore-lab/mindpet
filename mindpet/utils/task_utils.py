@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
-
+"""Task APIs"""
 import os
 import signal
 import time
@@ -78,12 +78,12 @@ def create_output_path_subdir_with_uuid(output_path):
     :param output_path: 入参output_path值
     """
     uuid_name = str(uuid.uuid4()).replace('-', '')
-    random_dir = f'tk_{uuid_name}'.upper()
+    random_dir = f'mindpet_{uuid_name}'.upper()
     full_output_path = os.path.join(output_path, random_dir).replace('\\', '/')
 
     while os.path.exists(full_output_path):
         uuid_name = str(uuid.uuid4()).replace('-', '')
-        random_dir = f'tk_{uuid_name}'.upper()
+        random_dir = f'mindpet_{uuid_name}'.upper()
         full_output_path = os.path.join(output_path, random_dir).replace('\\', '/')
 
     try:
@@ -91,6 +91,7 @@ def create_output_path_subdir_with_uuid(output_path):
     except Exception as ex:
         raise MakeDirError(f'Failed to create directory from param [output_path], error message: {str(ex)}') from ex
 
+    # pylint: disable=W1203
     logger.info(f'Create output directory successfully, directory name: {random_dir}')
     return full_output_path
 
@@ -107,8 +108,8 @@ def model_config_keys_check_item(content, config_keys):
     try:
         for key_item in content.keys():
             if key_item not in config_keys:
-                raise ModelConfigKeysInfoError('Invalid config in model config file, '
-                                               'only support [{}]'.format('/'.join(config_keys)))
+                raise ModelConfigKeysInfoError("Invalid config in model config file, "
+                                               f"only support [{'/'.join(config_keys)}]")
     except AttributeError as ex:
         raise ModelConfigKeysInfoError('Invalid key in model config file.') from ex
 
@@ -170,12 +171,16 @@ def handle_exception_log(exception):
     if isinstance(exception, click.exceptions.Abort):
         logger.info('Current command is artificially canceled.')
     elif isinstance(exception, click.exceptions.NoSuchOption):
+        # pylint: disable=W1203
         logger.error(f'Invalid param detected, error message: {str(exception)}')
     elif isinstance(exception, click.exceptions.MissingParameter):
+        # pylint: disable=W1203
         logger.error(f'Necessary param is missing, error message: {str(exception)}')
     elif isinstance(exception, Exception):
         if exception is None or not str(exception):
             logger.error('Exception occurred, no error message available.')
         elif str(exception).isdigit():
+            # pylint: disable=W1203
             logger.error(f'Exception occurred, error code: {str(exception)}')
+        # pylint: disable=W1203
         logger.error(f'Exception occurred, error message: {str(exception)}')

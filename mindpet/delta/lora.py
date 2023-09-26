@@ -59,11 +59,11 @@ class LoRADense(nn.Dense):
         self.lora_rank = lora_rank
         self.lora_alpha = lora_alpha
         self.lora_dropout = get_dropout(lora_dropout)
-        self.tk_delta_lora_a = Parameter(
+        self.mindpet_delta_lora_a = Parameter(
             initializer(lora_a_init, [lora_rank, in_channels], param_init_type),
-            name='tk_delta_lora_A')
-        self.tk_delta_lora_b = Parameter(initializer(lora_b_init, [out_channels, lora_rank], param_init_type),
-                                         name='tk_delta_lora_B')
+            name='mindpet_delta_lora_A')
+        self.mindpet_delta_lora_b = Parameter(initializer(lora_b_init, [out_channels, lora_rank], param_init_type),
+                                         name='mindpet_delta_lora_B')
         self.scaling = self.lora_alpha / self.lora_rank
 
         # Calculation utils
@@ -80,8 +80,8 @@ class LoRADense(nn.Dense):
         ori_dtype = F.dtype(input_tensor)
         input_tensor = self.cast(input_tensor, self.dtype)
         weight = self.cast(self.weight, self.dtype)
-        lora_a = self.cast(self.tk_delta_lora_a, self.dtype)
-        lora_b = self.cast(self.tk_delta_lora_b, self.dtype)
+        lora_a = self.cast(self.mindpet_delta_lora_a, self.dtype)
+        lora_b = self.cast(self.mindpet_delta_lora_b, self.dtype)
         scaling = self.cast(self.scaling, self.dtype)
 
         # Shape operations

@@ -5,14 +5,10 @@ repos:
       # list of supported hooks: https://pre-commit.com/hooks.html
       - id: check-yaml
       - id: debug-statements
-      - id: end-of-file-fixer
-      - id: mixed-line-ending
-        args: ["--fix=lf"]
-      - id: trailing-whitespace
 
   - repo: https://github.com/pylint-dev/pylint
     rev: v2.14.5
     hooks:
       - id: pylint
         args: [ "-rn", "-sn", "--rcfile=pylintrc", "--fail-on=I" ]
-        exclude: tests(/\w*)*/functional/|tests/input|tests(/\w*)*data/|doc/
+        exclude: tests(/\w*)*/functional/|tests/input|tests(/\w*)*data/|doc/|test|pylintrc

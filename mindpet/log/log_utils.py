@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
-
+"""Log APIs"""
 import os
 import stat
 import platform
 from typing import Dict, List, Tuple, Union
 
-from mindpet.utils.exceptions import MakeDirError, UnsupportedPlatformError, PathOwnerError, PathModeError
+from mindpet.utils.exceptions import MakeDirError, UnsupportedPlatformError, PathOwnerError
 from mindpet.utils.constants import EMPTY_STRING
 
 LOG_CONTENT_BLACK_LIST = ('\r', '\n', '\t', '\f', '\v', '\b', '\u000A', '\u000D', '\u000C',
@@ -130,7 +130,7 @@ def get_num_nodes_devices(rank_size: int) -> Tuple[int, int]:
 
 def log_args_black_list_characters_replace(args):
     """日志内容参数黑名单校验"""
-    res = list()
+    res = []
     if args is None or len(args) == 0:
         return args
     if isinstance(args, (list, tuple)):
@@ -174,12 +174,6 @@ def wrap_local_working_directory(file_name, specific_path_config=None):
 
         if path_owner != current_login_user:
             raise PathOwnerError('The owner of $HOME path is not current login user.')
-
-        mode = oct(os.stat(path).st_mode)[-3:]
-        ret = (int(mode[0]), int(mode[1]), int(mode[2]))
-        if stat.S_IWOTH & ret[2] != 0:
-            raise PathModeError('$HOME path may have risk of rights escalation, '
-                                'other users should not have permission to write.')
 
     if file_name is None or file_name == '':
         raise ValueError('[file_name] is None or empty.')
@@ -226,6 +220,7 @@ def wrap_local_working_directory(file_name, specific_path_config=None):
 
 
 def specific_path_config_legality_check(specific_path_config):
+    """specific_path_config_legality_check"""
     specific_path = specific_path_config.get('path')
 
     if specific_path is None:
@@ -240,6 +235,7 @@ def specific_path_config_legality_check(specific_path_config):
 
 
 class Const:
+    """Const"""
     def __init__(self):
         self.level = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
         self.local_default_log_file_dir = None

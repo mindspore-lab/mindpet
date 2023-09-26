@@ -53,17 +53,17 @@ class AdapterLayer(nn.Cell):
         self.non_linearity_name = non_linearity
 
         adapter_dict = OrderedDict()
-        adapter_dict["tk_delta_adapter_down_sampler"] = _Linear(hidden_size,
+        adapter_dict["mindpet_delta_adapter_down_sampler"] = _Linear(hidden_size,
                                                                 bottleneck_size,
                                                                 compute_dtype=compute_dtype,
                                                                 param_init_type=param_init_type)
-        adapter_dict["tk_delta_adapter_non_linear"] = get_activation(non_linearity)
-        adapter_dict["tk_delta_adapter_up_sampler"] = _Linear(bottleneck_size,
+        adapter_dict["mindpet_delta_adapter_non_linear"] = get_activation(non_linearity)
+        adapter_dict["mindpet_delta_adapter_up_sampler"] = _Linear(bottleneck_size,
                                                               hidden_size,
                                                               compute_dtype=compute_dtype,
                                                               param_init_type=param_init_type)
 
-        self.tk_delta_adapter_block = nn.SequentialCell(adapter_dict)
+        self.mindpet_delta_adapter_block = nn.SequentialCell(adapter_dict)
         self.residual_add = P.Add()
         self.cast = P.Cast()
         self.shape = P.Shape()
@@ -79,7 +79,7 @@ class AdapterLayer(nn.Cell):
         input_tensor = self.reshape(input_tensor, (-1, input_tensor_shape[-1]))
 
         # calculate adapter_out
-        adapter_out = self.tk_delta_adapter_block(input_tensor)
+        adapter_out = self.mindpet_delta_adapter_block(input_tensor)
 
         # residual connection, add input and adapter_out
         output = self.residual_add(input_tensor, adapter_out)
@@ -99,27 +99,29 @@ class AdapterLayer(nn.Cell):
               strategy_residual_add=None):
         """Shard Method"""
         try:
-            self.tk_delta_adapter_block.tk_delta_adapter_down_sampler.shard(
+            self.mindpet_delta_adapter_block.mindpet_delta_adapter_down_sampler.shard(
                 strategy_matmul=strategy_matmul_down_sampler, strategy_bias=strategy_bias_down_sampler)
 
             if self.non_linearity_name.lower() == "leakyrelu":
-                self.tk_delta_adapter_block.tk_delta_adapter_non_linear.select_op.shard(
+                self.mindpet_delta_adapter_block.mindpet_delta_adapter_non_linear.select_op.shard(
                     (strategy_non_linearity[0], strategy_non_linearity[0]))
             elif self.non_linearity_name.lower() == "logsigmoid":
-                self.tk_delta_adapter_block.tk_delta_adapter_non_linear.mul.shard((strategy_non_linearity[0], ()))
-                self.tk_delta_adapter_block.tk_delta_adapter_non_linear.exp.shard(strategy_non_linearity)
-                self.tk_delta_adapter_block.tk_delta_adapter_non_linear.add.shard((strategy_non_linearity[0], ()))
-                self.tk_delta_adapter_block.tk_delta_adapter_non_linear.rec.shard(strategy_non_linearity)
-                self.tk_delta_adapter_block.tk_delta_adapter_non_linear.log.shard(strategy_non_linearity)
+                self.mindpet_delta_adapter_block.mindpet_delta_adapter_non_linear.mul.shard((
+                    strategy_non_linearity[0], ()))
+                self.mindpet_delta_adapter_block.mindpet_delta_adapter_non_linear.exp.shard(strategy_non_linearity)
+                self.mindpet_delta_adapter_block.mindpet_delta_adapter_non_linear.add.shard((
+                    strategy_non_linearity[0], ()))
+                self.mindpet_delta_adapter_block.mindpet_delta_adapter_non_linear.rec.shard(strategy_non_linearity)
+                self.mindpet_delta_adapter_block.mindpet_delta_adapter_non_linear.log.shard(strategy_non_linearity)
             elif self.non_linearity_name.lower() == "logsoftmax":
                 raise ValueError("The 'LogSoftmax' function is not supported in semi auto parallel "
                                 "or auto parallel mode.")
             else:
-                getattr(self.tk_delta_adapter_block.tk_delta_adapter_non_linear,
+                getattr(self.mindpet_delta_adapter_block.mindpet_delta_adapter_non_linear,
                     self.non_linearity_name).shard(strategy_non_linearity)
 
-            self.tk_delta_adapter_block.tk_delta_adapter_up_sampler.shard(strategy_matmul=strategy_matmul_up_sampler,
-                                                                        strategy_bias=strategy_bias_up_sampler)
+            self.mindpet_delta_adapter_block.mindpet_delta_adapter_up_sampler.shard(
+                strategy_matmul=strategy_matmul_up_sampler,strategy_bias=strategy_bias_up_sampler)
 
             self.residual_add.shard(strategy_residual_add)
 
@@ -142,7 +144,7 @@ class AdapterDense(nn.Dense):
             当使用str时，值引用自类initializer；更多细节请参考Initializer的值。
             当使用Tensor时，数据类型与输入Tensor相同。
             默认值："normal"。
-        bias_init (Union[Tensor, str, Initializer, numbers.Number]): 
+        bias_init (Union[Tensor, str, Initializer, numbers.Number]):
             线性层偏置参数的初始化方法。
             它的类型可以是Tensor，str，Initializer或numbers.Number。
             当使用str时，值引用自类initializer；更多细节请参考Initializer的值。
@@ -194,7 +196,7 @@ class AdapterDense(nn.Dense):
                          has_bias=has_bias,
                          activation=activation)
 
-        self.tk_delta_adapter = AdapterLayer(hidden_size=out_channels,
+        self.mindpet_delta_adapter = AdapterLayer(hidden_size=out_channels,
                                              bottleneck_size=bottleneck_size,
                                              non_linearity=non_linearity,
                                              param_init_type=param_init_type,
@@ -226,7 +228,7 @@ class AdapterDense(nn.Dense):
             input_tensor = self.activation(input_tensor)
 
         # calculate adapter_out
-        input_tensor = self.tk_delta_adapter(input_tensor)
+        input_tensor = self.mindpet_delta_adapter(input_tensor)
 
         # recover the previous outshape and dtype
         out_shape = x_shape[:-1] + (-1,)
@@ -267,7 +269,7 @@ class AdapterDense(nn.Dense):
                     getattr(self.activation, self.act_name).shard(strategy_activation_org)
 
             # set adapter strategy
-            self.tk_delta_adapter.shard(strategy_matmul_down_sampler=strategy_matmul_down_sampler,
+            self.mindpet_delta_adapter.shard(strategy_matmul_down_sampler=strategy_matmul_down_sampler,
                                         strategy_bias_down_sampler=strategy_bias_down_sampler,
                                         strategy_non_linearity=strategy_non_linearity,
                                         strategy_matmul_up_sampler=strategy_matmul_up_sampler,

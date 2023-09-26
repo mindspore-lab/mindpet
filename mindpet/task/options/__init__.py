@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""__init__"""
 
 from mindpet.task.options.data_path_option import DataPathOption
 from mindpet.task.options.pretrained_model_path_option import PretrainedModelPathOption

@@ -8,7 +8,7 @@
 
 from typing import Optional, List
 from fnmatch import fnmatch
-import mindspore.nn as nn
+from mindspore import nn
 
 from mindpet.log.log import logger
 from mindpet.utils.constants import DELTA_LIST
@@ -92,7 +92,7 @@ def freeze_delta(model: nn.Cell,
         try:
             freeze_modules(model, include, exclude)
         except Exception as ex:
-            raise Exception(f"Exception occurred when freeze model for delta, error message: {str(ex)}") from ex
+            raise UnexpectedError(f"Exception occurred when freeze model for delta, error message: {str(ex)}") from ex
 
     logger.info("End to freeze model for delta.")
 
@@ -147,7 +147,7 @@ def _freeze_for_mode(model: nn.Cell, mode: str) -> None:
 
     :param model: 需要冻结的模型实例，必填。
     """
-    delta_name = '*tk_delta_' + mode + '*'
+    delta_name = '*mindpet_delta_' + mode + '*'
     if mode == 'bitfit':
         delta_name = '*bias'
     freeze_modules(model, include=['*'], exclude=[delta_name])

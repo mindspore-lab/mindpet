@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""log module."""
 
 import logging
 import logging.config
@@ -10,9 +11,6 @@ import sys
 from typing import Dict, List, Tuple, Union
 import traceback
 
-from mindpet.utils.constants import DEFAULT_MAX_LOG_FILE_NUM, DEFAULT_MAX_LOG_FILE_SIZE, ABNORMAL_EXIT_CODE
-from mindpet.utils.exceptions import MakeDirError, UnsupportedPlatformError, PathOwnerError, PathModeError
-
 try:
     from concurrent_log_handler import ConcurrentRotatingFileHandler as RFHandler
 except ImportError:
@@ -20,6 +18,9 @@ except ImportError:
 
 from mindpet.log.log_utils import check_list, const, convert_nodes_devices_input, create_dirs, \
     generate_rank_list, get_num_nodes_devices, get_rank_info, log_args_black_list_characters_replace, check_link_path
+from mindpet.utils.constants import DEFAULT_MAX_LOG_FILE_NUM, DEFAULT_MAX_LOG_FILE_SIZE, ABNORMAL_EXIT_CODE
+from mindpet.utils.exceptions import MakeDirError, UnsupportedPlatformError, PathOwnerError, PathModeError
+
 
 logger_list = {}
 stream_handler_list = {}
@@ -102,7 +103,7 @@ def validate_level(var_name: str, var):
     if not isinstance(var, str):
         raise TypeError(f'The format of {var_name} must be of type str.')
     if var not in const.level:
-        raise ValueError('{}={} needs to be in {}'.format(var_name, var, const.level))
+        raise ValueError(f'{var_name}={var} needs to be in {const.level}')
 
 
 def validate_std_input_format(to_std: bool, stdout_nodes: Union[List, Tuple, None],
@@ -121,12 +122,12 @@ def validate_file_input_format(file_level: Union[List, Tuple], file_save_dir: st
                                file_name: Union[List, Tuple]):
     """验证日志内容落盘的参数"""
 
-    if not (isinstance(file_level, tuple) or isinstance(file_level, list)):
+    if not isinstance(file_level, (tuple, list)):
         raise TypeError('The value of file_level should be list or a tuple.')
     for level in file_level:
         validate_level('level in file_level', level)
 
-    if not (isinstance(file_name, (tuple, list))):
+    if not isinstance(file_name, (tuple, list)):
         raise TypeError('The value of file_name should be a list or a tuple.')
 
     if not len(file_level) == len(file_name):
@@ -232,17 +233,12 @@ class CustomizedRotatingFileHandler(RFHandler):
     2.实现日志文件的权限控制
     3.日志文件的绕接
     """
-
-    def __init__(self, *args, **kwargs):
-        """重写init，增加日志文件的权限控制"""
-        super(CustomizedRotatingFileHandler, self).__init__(*args, **kwargs)
-
     def doRollover(self) -> None:
         """重写doRoller，实现绕接，并且对日志文件的权限进行控制"""
-        super(CustomizedRotatingFileHandler, self).doRollover()
+        super().doRollover()
         if self.backupCount > 0:
             for i in range(self.backupCount - 1, 0, -1):
-                file_name = self.rotation_filename('%s.%d' % (self.baseFilename, i))
+                file_name = self.rotation_filename(f'{self.baseFilename}.{i}')
                 if os.path.exists(file_name) and not check_link_path(str(file_name)):
                     os.chmod(file_name, MODE_440)
 
@@ -252,7 +248,7 @@ class CustomizedRotatingFileHandler(RFHandler):
         if tmp_out is not None and len(tmp_out) > LOG_RECORD_MAX_LEN:
             record.msg = tmp_out[:LOG_RECORD_MAX_LEN]
             record.args = ()
-        super(CustomizedRotatingFileHandler, self).emit(record)
+        super().emit(record)
         if not check_link_path(str(self.baseFilename)) and os.path.exists(self.baseFilename):
             os.chmod(self.baseFilename, MODE_640)
 
@@ -260,7 +256,7 @@ class CustomizedRotatingFileHandler(RFHandler):
         return log_format(self, record)
 
     def _open_lockfile(self):
-        super(CustomizedRotatingFileHandler, self)._open_lockfile()
+        super()._open_lockfile()
         self._do_chmod(MODE_640)
 
     def _do_chmod(self, mode):
@@ -299,8 +295,9 @@ def get_file_handler_list(file_level: Union[List, Tuple], file_path: Union[List,
 
 
 class MxLogger(logging.Logger):
+    """Define Mx logger"""
     def __init__(self, name, **kwargs):
-        super(MxLogger, self).__init__(name)
+        super().__init__(name)
         self.source = None
         self.method = None
         self.propagate = False
@@ -331,15 +328,16 @@ class MxLogger(logging.Logger):
     ):
         """重写makeRecord方法，日志内容中增加发起端标识和pid信息"""
         if extra is None:
-            extra = dict()
+            extra = {}
         extra['source'] = self.source if hasattr(self, 'source') else UNKNOWN
         extra['pid'] = self.pid if hasattr(self, 'pid') else UNKNOWN
         args = log_args_black_list_characters_replace(args)
-        return super(MxLogger, self).makeRecord(name, level=level, fn=fn, lno=lno, msg=msg, args=args,
+        return super().makeRecord(name, level=level, fn=fn, lno=lno, msg=msg, args=args,
                                                 exc_info=exc_info,
                                                 func=func, extra=extra, sinfo=sinfo)
 
     def set_logger(self):
+        """设置logger输出格式以及日志输出路径"""
         if const.local_default_log_file_dir is None:
             const.get_local_default_log_file_dir()
         file_save_dir = os.path.expanduser(const.local_default_log_file_dir)
@@ -361,11 +359,13 @@ class MxLogger(logging.Logger):
         self.setLevel(_convert_level('DEBUG'))
         self.set_flag = True
 
+    # pylint: disable=W0221
     def _log(self,
              level,
              msg,
              args,
              **kwargs):
+        """日志接口"""
         if not self.set_flag:
             try:
                 self.set_logger()
@@ -377,10 +377,11 @@ class MxLogger(logging.Logger):
                 else:
                     logging.error(traceback.format_exc())
                 sys.exit(ABNORMAL_EXIT_CODE)
+            # pylint: disable=W0703
             except Exception:
                 logging.error(traceback.format_exc())
                 sys.exit(ABNORMAL_EXIT_CODE)
-        super(MxLogger, self)._log(level, msg, args, **kwargs)
+        super()._log(level, msg, args, **kwargs)
 
 
 def set_logger_property(source):

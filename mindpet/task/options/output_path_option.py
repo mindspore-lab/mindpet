@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""output path option"""
 
 import click
 from click.exceptions import MissingParameter
@@ -10,6 +11,7 @@ from mindpet.task.options.path_check_param import default_folder_length_check_pa
 
 
 class OutputPathOption(click.core.Option):
+    """OutputPathOption class"""
     def __init__(self):
         super().__init__(
             param_decls=('-op', '--output_path'),

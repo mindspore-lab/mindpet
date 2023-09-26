@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
 
-
+import sys
+sys.path.append('.')
 import os
 import copy
 import logging

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
-
+"""base check module."""
 from mindpet.security.param_check.option_check_utils import PathRightEscalationCheck, FileSizeCheck
 
 
 class BaseCheckParam:
+    """base param check class."""
     def __init__(self, mode, path_including_file, force_quit, quiet):
         """
         入参校验参数
@@ -21,6 +22,7 @@ class BaseCheckParam:
 
 
 class BaseCheck:
+    """base check class."""
     def __init__(self, option_name, option_value):
         """
         基础校验项构造方法

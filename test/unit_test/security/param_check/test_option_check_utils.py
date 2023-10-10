@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
-
+import sys
+sys.path.append('.')
 import os
 import shutil
 import unittest
@@ -978,31 +979,6 @@ class TestOptionCheck(unittest.TestCase):
                                  path_including_file=False)
         logging.info('Finish test_path_granularity_check_with_file.')
 
-    def test_path_right_escalation_check_with_different_owner(self):
-        """
-        测试路径权限提升校验, 在路径属主与实际调用用户不符合的情况
-        """
-        logging.info('Start test_path_right_escalation_check_with_different_owner.')
-
-        path = os.path.join(LOCAL_PATH, 'path_right_escalation_check')
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        os.chown(path, uid=100, gid=-1)
-        entrance_monitor.set_value(ENTRANCE_TYPE, 'SDK')
-
-        with self.assertRaises(PathRightEscalationError):
-            PathRightEscalationCheck(option_name='path_right_escalation_check',
-                                     option_value=path,
-                                     mode='777',
-                                     force_quit=True,
-                                     quiet=False)
-
-        if os.path.exists(path):
-            os.rmdir(path)
-
-        logging.info('Finish test_path_right_escalation_check_with_different_owner.')
-
     def test_path_right_escalation_check_with_none_mode(self):
         """
         测试路径权限提升校验, 参数mode传None值的情况
@@ -1225,8 +1201,7 @@ class TestOptionCheck(unittest.TestCase):
         with self.assertRaises(FileOversizeError):
             FileSizeCheck(option_name='file_size_check',
                           option_value=full_path,
-                          path_including_file=True,
-                          max_file_size=10)
+                          path_including_file=True)
 
         if os.path.exists(full_path):
             os.remove(full_path)

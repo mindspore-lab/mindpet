@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""pretrained model path option"""
 
 import click
 from mindpet.utils.constants import PATH_MODE_LIMIT
@@ -9,6 +10,7 @@ from mindpet.task.options.path_check_param import default_folder_length_check_pa
 
 
 class PretrainedModelPathOption(click.core.Option):
+    """PretrainedModelPathOption class"""
     def __init__(self):
         super().__init__(
             param_decls=('-pm', '--pretrained_model_path'),

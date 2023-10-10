@@ -37,7 +37,7 @@ def finetune_launcher(user_name):
     change_path_mode(model_config_path, MODE_750)
     change_path_mode(boot_file_path, MODE_750)
 
-    cmd = ['tk',
+    cmd = ['mindpet',
            'finetune',
            '--quiet',
            '--data_path', dataset_path,
@@ -75,7 +75,7 @@ def evaluate_launcher(user_name):
     change_path_mode(model_config_path, MODE_750)
     change_path_mode(boot_file_path, MODE_750)
 
-    cmd = ['tk',
+    cmd = ['mindpet',
            'evaluate',
            '--quiet',
            '--data_path', dataset_path,
@@ -113,7 +113,7 @@ def infer_launcher(user_name):
     change_path_mode(model_config_path, MODE_750)
     change_path_mode(boot_file_path, MODE_750)
 
-    cmd = ['tk',
+    cmd = ['mindpet',
            'infer',
            '--quiet',
            '--data_path', dataset_path,

@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2010-2022. All rights reserved.
 
-import os 
+import sys
+sys.path.append('.')
+
+import os
 import logging
 import unittest
 import argparse
@@ -363,7 +366,7 @@ class TestAdapterLayer(unittest.TestCase):
         adapter_layer = AdapterLayer(hidden_size=32, bottleneck_size=8, non_linearity='leakyrelu')
         leakyrelu_strategy_non_linearity = ((1, 1), (1, 1))
         adapter_layer.shard(strategy_non_linearity=leakyrelu_strategy_non_linearity)
-        self.assertEqual(adapter_layer.tk_delta_adapter_block.tk_delta_adapter_non_linear.select_op.in_strategy, 
+        self.assertEqual(adapter_layer.mindpet_delta_adapter_block.mindpet_delta_adapter_non_linear.select_op.in_strategy, 
             leakyrelu_strategy_non_linearity)
         logging.info('Finish test_shard_with_LeakyReLU_activation')
 
@@ -372,7 +375,7 @@ class TestAdapterLayer(unittest.TestCase):
         adapter_layer = AdapterLayer(hidden_size=32, bottleneck_size=8, non_linearity='logsigmoid')
         logsigmoid_strategy_non_linearity = ((1, 1), (1, 1))
         adapter_layer.shard(strategy_non_linearity=logsigmoid_strategy_non_linearity)
-        self.assertEqual(adapter_layer.tk_delta_adapter_block.tk_delta_adapter_non_linear.log.in_strategy, 
+        self.assertEqual(adapter_layer.mindpet_delta_adapter_block.mindpet_delta_adapter_non_linear.log.in_strategy, 
             logsigmoid_strategy_non_linearity)
         logging.info('Finish test_shard_with_logsigmoid_activation')
 

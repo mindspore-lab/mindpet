@@ -5,6 +5,8 @@
 """
 功能: 冻结功能单元测试模块
 """
+import sys
+sys.path.append('.')
 import logging
 import os
 import unittest
@@ -14,6 +16,7 @@ import pytest
 from mindspore import nn
 from mindpet.graph.freeze_utils import freeze_modules, freeze_delta, freeze_from_config
 from mindpet.utils.exceptions import ModelConfigFreezeInfoError
+from mindformers.modules import Transformer
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -337,10 +340,10 @@ class SimpleNetwork(nn.Cell):
     def __init__(self):
         super(SimpleNetwork, self).__init__()
         self.embedding = nn.Embedding(10, 5, True)
-        self.transformer = nn.Transformer(batch_size=2, encoder_layers=1, decoder_layers=2, hidden_size=64,
+        self.transformer = Transformer(batch_size=2, encoder_layers=1, decoder_layers=2, hidden_size=64,
                                           ffn_hidden_size=64, src_seq_length=20, tgt_seq_length=10)
-        self.tk_delta_lora = nn.Dense(10, 5)
-        self.tk_delta_prefixtuning = nn.Dense(10, 5)
+        self.mindpet_delta_lora = nn.Dense(10, 5)
+        self.mindpet_delta_prefixtuning = nn.Dense(10, 5)
         self.dense = nn.Dense(10, 5)
         self.relu = nn.ReLU()
 

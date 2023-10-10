@@ -9,7 +9,7 @@ import os
 import time
 from collections import OrderedDict
 
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import context, Tensor
 from mindspore.train.callback._callback import set_cur_net
 from mindspore.train.callback import ModelCheckpoint
@@ -21,6 +21,7 @@ from mindpet.log.log import logger
 
 
 class TrainableParamsCheckPoint(ModelCheckpoint):
+    """TrainableParamsCheckPoint class"""
     def __init__(self, directory, prefix="DELTA_CKP", config=None):
         """
         Callback初始化
@@ -39,10 +40,10 @@ class TrainableParamsCheckPoint(ModelCheckpoint):
         self._last_triggered_step = 0
         self._latest_ckpt_file_name = ""
         self._cur_time_for_keep = time.time()
-        super(TrainableParamsCheckPoint, self).__init__(prefix, directory, config)
+        super().__init__(prefix, directory, config)
 
     def set_train_info(self, cb_params, cur_step_num):
-        # 保持ckpt文件始终小于等于配置的ckpt文件最大数
+        """保持ckpt文件始终小于等于配置的ckpt文件最大数"""
         if self._config.keep_checkpoint_max and \
                 0 < self._config.keep_checkpoint_max <= self._manager.ckpoint_num:
             self._manager.remove_oldest_ckpoint_file()
@@ -63,6 +64,7 @@ class TrainableParamsCheckPoint(ModelCheckpoint):
 
     def trans_network(self, network):
         """从network中选取可训练的参数，仅保存这部分参数"""
+        parameter_layout_dict = network.parameter_layout_dict
         network.init_parameters_data()
         param_dict = OrderedDict()
         for param in network.trainable_params():
@@ -72,7 +74,7 @@ class TrainableParamsCheckPoint(ModelCheckpoint):
             each = {"name": param_name}
             param_data = Tensor(param.data.asnumpy())
             if param_name in network.parameter_layout_dict:
-                param_data = _get_merged_param_data(network, param_name, param_data,
+                param_data = _get_merged_param_data(network, parameter_layout_dict, param_name, param_data,
                                                     self._config.integrated_save)
             each["data"] = param_data
             param_list.append(each)
@@ -130,4 +132,3 @@ class TrainableParamsCheckPoint(ModelCheckpoint):
         self._latest_ckpt_file_name = cur_file
 
         logger.info("Save checkpoint successfully.")
-

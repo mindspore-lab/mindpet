@@ -38,7 +38,7 @@ freeze_modules(model, include, exclude)
 **样例：**
 
 ```python
-from tk.graph.freeze_utils import freeze_modules
+from mindpet.graph.freeze_utils import freeze_modules
 
 # 初始化网络结构
 model = Network()
@@ -86,7 +86,7 @@ freeze_delta(model, mode, include, exclude)
 **样例：**
 
 ```python
-from tk.graph.freeze_utils import freeze_delta
+from mindpet.graph.freeze_utils import freeze_delta
 
 # 初始化网络结构
 model = Network()
@@ -141,7 +141,7 @@ freeze_from_config(model, config_path)
 **样例：**
 
 ```python
-from tk.graph.freeze_utils import freeze_from_config
+from mindpet.graph.freeze_utils import freeze_from_config
 
 # 初始化网络结构
 model = Network()
@@ -187,7 +187,7 @@ TrainableParamsCheckPoint(directory, prefix, config)
 - **在模型微调时**，从大模型微调工具包中引入`TrainableParamsCheckPoint`类，用法与MindSpore的`ModelCheckpoint`一致，实例化此`callback`后，加入训练时的`callback list`即可，例如：
 
 ```python
-from tk.graph import TrainableParamsCheckPoint
+from mindpet.graph import TrainableParamsCheckPoint
 from mindspore import CheckpointConfig
 
 ckpt_config = CheckpointConfig()

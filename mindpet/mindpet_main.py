@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""MindPet Tuning Main."""
 
 import sys
 import click
@@ -23,6 +24,8 @@ def cli_wrapper():
 
     try:
         cli(standalone_mode=False)
+    # pylint: disable=W0719
+    # pylint: disable=W0703
     except Exception as ex:
         handle_exception_log(ex)
         sys.exit(ABNORMAL_EXIT_CODE)

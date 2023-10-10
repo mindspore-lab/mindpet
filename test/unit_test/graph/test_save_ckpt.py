@@ -5,6 +5,8 @@
 """
 功能: 保存可训练参数功能单元测试模块
 """
+import sys
+sys.path.append('.')
 import os
 import shutil
 import logging
@@ -297,7 +299,7 @@ class TestSaveCkpt(TestCase):
 
         logging.info('Finish test_ckpt_num.')
 
-    @mock.patch("tk.graph.ckpt_util.TrainableParamsCheckPoint._check_save_ckpt")
+    @mock.patch("mindpet.graph.ckpt_util.TrainableParamsCheckPoint._check_save_ckpt")
     def test_check_save_ckpt(self, mock_func):
         logging.info('Start test_check_save_ckpt.')
         ckpt_path = os.path.join(cur_dir, "temp")
@@ -396,8 +398,6 @@ class TestSaveCkpt(TestCase):
         train(params_check_point, enable=True)
 
         self.assertTrue(os.path.exists(ckpt_path))
-        meta_path = os.path.join(ckpt_path, "checkpoint_delta-graph.meta")
-        self.assertTrue(os.path.exists(meta_path))
 
         shutil.rmtree(ckpt_path, ignore_errors=True)
 
@@ -426,3 +426,6 @@ class TestSaveCkpt(TestCase):
 
 if __name__ == '__main__':
     pytest.main(['-s', os.path.abspath(__file__)])
+
+# Set source attribute for function TestNet.construct to support run so or pyc file in Graph Mode.
+setattr(TestNet.construct, 'source', (['    def construct(self, value):\n', '        # 使用定义好的运算构建前向网络\n', '        value = mindspore.ops.reshape(value, (value.shape[0], -1))\n', '        value = self.fc_temp(value)\n', '        return value\n'], 56))

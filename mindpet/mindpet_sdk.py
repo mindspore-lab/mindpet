@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""MindPet SDK Module."""
 
-from mindpet.tk_main import cli
+from mindpet.mindpet_main import cli
 from mindpet.log.log import logger, set_logger_property
 from mindpet.utils.task_utils import handle_exception_log
 from mindpet.utils.entrance_monitor import entrance_monitor
-from mindpet.utils.constants import ENTRANCE_TYPE, EMPTY_STRING, ARG_NAMES, TK_SDK_INTERFACE_NAMES
+from mindpet.utils.constants import ENTRANCE_TYPE, EMPTY_STRING, ARG_NAMES, MINDPET_SDK_INTERFACE_NAMES
 
 entrance_monitor.set_value(ENTRANCE_TYPE, 'SDK')
 set_logger_property('SDK')
@@ -55,13 +56,15 @@ def start_by_task_type(args, kwargs, task_type, ret_err_msg):
     :param kwargs: 参数kwargs
     :return: 任务执行结果
     """
-    if task_type not in TK_SDK_INTERFACE_NAMES:
+    if task_type not in MINDPET_SDK_INTERFACE_NAMES:
         logger.error('Invalid task_type for starting task.')
         return ret_err_msg
 
     try:
         commands = commands_generator(task_type, args, kwargs)
         return cli.main(commands, standalone_mode=False)
+    # pylint: disable=W0719
+    # pylint: disable=W0703
     except Exception as ex:
         handle_exception_log(ex)
         return ret_err_msg
@@ -82,18 +85,18 @@ def commands_generator(header, args, kwargs):
     args_length = min(len(args), len(ARG_NAMES.get(header)))
 
     for idx in range(args_length):
-        output.append('--{}'.format(ARG_NAMES.get(header)[idx]))
-        output.append('{}'.format(args[idx]))
+        output.append(f"--{(ARG_NAMES.get(header)[idx])}")
+        output.append(f"--{(args[idx])}")
 
     for key_item, val_item in kwargs.items():
         # 安静模式仅允许CLI场景使用, SDK场景不允许配置该值, 给予错误警告
         if str(key_item) == 'quiet':
             raise ValueError('Param [quiet] is not supported by SDK.')
         # SDK场景参数值传None, 等价于CLI场景未传参数, 不应拼接到命令中
-        elif val_item is None:
+        if val_item is None:
             continue
 
-        output.append('--{}'.format(key_item))
-        output.append('{}'.format(val_item))
+        output.append(f"--{key_item}")
+        output.append(f"--{val_item}")
 
     return [header] + output

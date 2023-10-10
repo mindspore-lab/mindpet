@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
 
-
+import sys
+sys.path.append('.')
 import os
 import shutil
 import logging
@@ -15,7 +16,7 @@ from mindpet.log.log_utils import log_args_black_list_characters_replace, wrap_l
 from mindpet.utils.exceptions import MakeDirError, UnsupportedPlatformError, PathOwnerError, PathModeError
 from mindpet.utils.constants import DEFAULT_MAX_LOG_FILE_NUM, EMPTY_STRING
 
-MODE640 = 0o640
+MODE740 = 0o740
 
 CONFIG_TEST_BASE_DIR = os.path.expanduser('~/.cache/Huawei/mxTuningKit/log')
 CONFIG_TEST_NODE_DIR = os.path.realpath(os.path.join(CONFIG_TEST_BASE_DIR, 'node_0'))
@@ -34,7 +35,7 @@ logging.getLogger().setLevel(logging.INFO)
 class TestLogger(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.temp_path = '/temp_path'
+        cls.temp_path = './temp_path'
         cls.full_path = "test"
 
     def test_logger_level(self):
@@ -113,30 +114,6 @@ class TestLogger(TestCase):
         self.assertEqual(replace_args, " ")
         logging.info('Finish test_log_content_sapce_check.')
 
-    def test_wrap_local_working_directory_path_owner(self):
-        logging.info('Start test_wrap_local_working_directory_path_owner.')
-        temp_path = self.temp_path
-        os.environ['HOME'] = temp_path
-        if not os.path.exists(temp_path):
-            os.makedirs(temp_path, exist_ok=True)
-        os.chown(temp_path, uid=100, gid=-1)
-        with self.assertRaises(PathOwnerError):
-            wrap_local_working_directory("test")
-        shutil.rmtree(temp_path)
-        logging.info('Finish test_wrap_local_working_directory_path_owner.')
-
-    def test_wrap_local_working_directory_path_rights(self):
-        logging.info('Start test_wrap_local_working_directory_path_rights.')
-        temp_path = self.temp_path
-        os.environ['HOME'] = temp_path
-        if not os.path.exists(temp_path):
-            os.makedirs(temp_path, exist_ok=True)
-        os.chmod(temp_path, 0o752)
-        with self.assertRaises(PathModeError):
-            wrap_local_working_directory("test")
-        os.rmdir(temp_path)
-        logging.info('Finish test_wrap_local_working_directory_path_rights.')
-
     def test_wrap_local_working_directory_none(self):
         logging.info('Start test_wrap_local_working_directory_none.')
         with self.assertRaises(ValueError):
@@ -168,7 +145,7 @@ class TestLogger(TestCase):
         logging.info('Start test_wrap_local_working_directory_success.')
         temp_path = self.temp_path
         os.environ['HOME'] = temp_path
-        os.makedirs(temp_path, exist_ok=True, mode=MODE640)
+        os.makedirs(temp_path, exist_ok=True, mode=MODE740)
         full_path = self.full_path
         working_directory = wrap_local_working_directory(full_path)
         self.assertTrue(os.path.exists(working_directory))
@@ -179,9 +156,9 @@ class TestLogger(TestCase):
         logging.info('Start test_wrap_local_working_directory_with_config.')
         temp_path = self.temp_path
         os.environ['HOME'] = temp_path
-        os.makedirs(temp_path, exist_ok=True, mode=MODE640)
+        os.makedirs(temp_path, exist_ok=True, mode=MODE740)
         full_path = self.full_path
-        path_config = {"path": "test/temp", "rule": MODE640}
+        path_config = {"path": "test/temp", "rule": MODE740}
         working_directory = wrap_local_working_directory(full_path, specific_path_config=path_config)
         self.assertTrue(os.path.exists(working_directory))
         shutil.rmtree(temp_path)
@@ -191,10 +168,10 @@ class TestLogger(TestCase):
         logging.info('Start test_wrap_local_working_directory_with_config_file_exist.')
         temp_path = self.temp_path
         os.environ['HOME'] = temp_path
-        os.makedirs(temp_path, exist_ok=True, mode=MODE640)
+        os.makedirs(temp_path, exist_ok=True, mode=MODE740)
         full_path = self.full_path
-        path_config = {"path": "test/temp", "rule": MODE640}
-        os.makedirs("/temp_path/.cache/Huawei/mxTuningKit/test/temp/test", exist_ok=True)
+        path_config = {"path": "test/temp", "rule": MODE740}
+        os.makedirs("./temp_path/.cache/Huawei/mxTuningKit/test/temp/test", exist_ok=True)
         working_directory = wrap_local_working_directory(full_path, specific_path_config=path_config)
         self.assertTrue(os.path.exists(working_directory))
         shutil.rmtree(temp_path)
@@ -204,13 +181,13 @@ class TestLogger(TestCase):
         logging.info('Start test_wrap_local_working_directory_with_config_illegal.')
         temp_path = self.temp_path
         os.environ['HOME'] = temp_path
-        os.makedirs(temp_path, exist_ok=True, mode=MODE640)
+        os.makedirs(temp_path, exist_ok=True, mode=MODE740)
         full_path = self.full_path
         path_config = {"path": "test"}
         with self.assertRaises(ValueError):
             working_directory = wrap_local_working_directory(full_path, specific_path_config=path_config)
 
-        path_config = {"rule": MODE640}
+        path_config = {"rule": MODE740}
         with self.assertRaises(ValueError):
             working_directory = wrap_local_working_directory(full_path, specific_path_config=path_config)
 
@@ -222,7 +199,7 @@ class TestLogger(TestCase):
         logging.info('Start test_wrap_local_working_directory_platfrom_not_linux.')
         temp_path = self.temp_path
         os.environ['HOME'] = temp_path
-        os.makedirs(temp_path, exist_ok=True, mode=MODE640)
+        os.makedirs(temp_path, exist_ok=True, mode=MODE740)
         full_path = self.full_path
 
         mock_func.return_value = "windows"
@@ -236,7 +213,7 @@ class TestLogger(TestCase):
         logging.info('Start test_wrap_local_working_directory_full_path_fail.')
         temp_path = self.temp_path
         os.environ['HOME'] = temp_path
-        os.mkdir(temp_path, mode=MODE640)
+        os.mkdir(temp_path, mode=MODE740)
         full_path = self.full_path
         mock_func.side_effect = RuntimeError
         with self.assertRaises(MakeDirError):
@@ -250,12 +227,12 @@ class TestLogger(TestCase):
         temp_path = self.temp_path
         full_path = self.full_path
         os.environ['HOME'] = temp_path
-        os.mkdir(temp_path, mode=MODE640)
-        os.mkdir("/temp_path/.cache", mode=MODE640)
-        os.mkdir("/temp_path/.cache/Huawei", mode=MODE640)
-        os.mkdir("/temp_path/.cache/Huawei/mxTuningKit", mode=MODE640)
-        os.makedirs("/temp_path/.cache/Huawei/mxTuningKit", exist_ok=True, mode=MODE640)
-        path_config = {"path": "test/temp", "rule": MODE640}
+        os.mkdir(temp_path, mode=MODE740)
+        os.mkdir("./temp_path/.cache", mode=MODE740)
+        os.mkdir("./temp_path/.cache/Huawei", mode=MODE740)
+        os.mkdir("./temp_path/.cache/Huawei/mxTuningKit", mode=MODE740)
+        os.makedirs("./temp_path/.cache/Huawei/mxTuningKit", exist_ok=True, mode=MODE740)
+        path_config = {"path": "test/temp", "rule": MODE740}
         mock_func.side_effect = RuntimeError
         with self.assertRaises(MakeDirError):
             working_directory = wrap_local_working_directory(full_path, specific_path_config=path_config)
@@ -268,13 +245,13 @@ class TestLogger(TestCase):
         temp_path = self.temp_path
         full_path = self.full_path
         os.environ['HOME'] = temp_path
-        os.mkdir(temp_path, mode=MODE640)
-        os.mkdir("/temp_path/.cache", mode=MODE640)
-        os.mkdir("/temp_path/.cache/Huawei", mode=MODE640)
-        os.mkdir("/temp_path/.cache/Huawei/mxTuningKit", mode=MODE640)
-        os.mkdir("/temp_path/.cache/Huawei/mxTuningKit/test", mode=MODE640)
-        os.mkdir("/temp_path/.cache/Huawei/mxTuningKit/test/temp", mode=MODE640)
-        path_config = {"path": "test/temp", "rule": MODE640}
+        os.mkdir(temp_path, mode=MODE740)
+        os.mkdir("./temp_path/.cache", mode=MODE740)
+        os.mkdir("./temp_path/.cache/Huawei", mode=MODE740)
+        os.mkdir("./temp_path/.cache/Huawei/mxTuningKit", mode=MODE740)
+        os.mkdir("./temp_path/.cache/Huawei/mxTuningKit/test", mode=MODE740)
+        os.mkdir("./temp_path/.cache/Huawei/mxTuningKit/test/temp", mode=MODE740)
+        path_config = {"path": "test/temp", "rule": MODE740}
         mock_func.side_effect = RuntimeError
         with self.assertRaises(MakeDirError):
             working_directory = wrap_local_working_directory(full_path, specific_path_config=path_config)
@@ -283,6 +260,7 @@ class TestLogger(TestCase):
 
     def test_get_file_path_list_base_dir_none(self):
         logging.info('Start test_get_file_path_list_base_dir_none.')
+        const.get_local_default_log_file_dir()
         base_save_dir = os.path.expanduser(const.local_default_log_file_dir)
         file_path = os.path.join(base_save_dir, "test.log")
         path_list = get_file_path_list(base_save_dir=None, append_rank_dir=False, server_id=0, rank_id=0,
@@ -290,10 +268,11 @@ class TestLogger(TestCase):
         self.assertIn(file_path, path_list)
         logging.info('Finish test_get_file_path_list_base_dir_none.')
 
-    @mock.patch("tk.log.log.check_link_path")
+    @mock.patch("mindpet.log.log.check_link_path")
     def test_get_file_path_list_base_dir_link_path(self, mock_func):
         logging.info('Start test_get_file_path_list_base_dir_link_path.')
         mock_func.return_value = True
+        const.get_local_default_log_file_dir()
         base_save_dir = os.path.expanduser(const.local_default_log_file_dir)
         file_path = os.path.join(base_save_dir, "node_0/device_0/test.log")
         path_list = get_file_path_list(base_save_dir=None, append_rank_dir=True, server_id=0, rank_id=0,

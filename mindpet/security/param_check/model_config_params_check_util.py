@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""Model Config check module."""
 
 from mindpet.log.log import logger
 from mindpet.utils.exceptions import ModelConfigParamsInfoError
 from mindpet.utils.constants import MODEL_CONFIG_PARAMS_CHARACTER_BLACKLIST, MODEL_CONFIG_LEN_LIMIT, \
-    TK_DEFINED_PARAM_NAME, INVALID_CUSTOM_PARAM_KEY_PREFIX, INVALID_CUSTOM_PARAM_VAL_PREFIX
+    MINDPET_DEFINED_PARAM_NAME, INVALID_CUSTOM_PARAM_KEY_PREFIX, INVALID_CUSTOM_PARAM_VAL_PREFIX
 
 
 class ModelConfigParamsChecker:
+    """
+    Define model config params checker.
+    """
     def __init__(self, task_object, params_config=None):
         """
         model_config配置文件内容校验构造方法
@@ -45,7 +49,8 @@ class ModelConfigParamsChecker:
             param_key, param_val = str(param_key), str(param_val)
 
             # 接口预定义参数与params的key重复校验
-            if param_key in TK_DEFINED_PARAM_NAME:
+            if param_key in MINDPET_DEFINED_PARAM_NAME:
+                # pylint: disable=W1203
                 logger.warning(
                     f'Find duplicate key [{param_key}] from config in [params] part in model config file.')
                 continue

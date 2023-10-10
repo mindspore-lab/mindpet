@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
-
+"""Version APIs"""
 def is_version_le(current_version, base_version):
     """
     description: Check whether the current version is lower than or equal to the base version.

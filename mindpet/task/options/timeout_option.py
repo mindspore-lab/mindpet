@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""timeout option"""
 
 import re
 import click
@@ -9,6 +10,7 @@ from mindpet.utils.constants import TIMEOUT_REGEX, HOURS_PER_DAY, SPACE_CHARACTE
 
 
 class TimeoutOption(click.core.Option):
+    """TimeoutOption class"""
     def __init__(self):
         super().__init__(
             param_decls=('-t', '--timeout'),
@@ -20,6 +22,7 @@ class TimeoutOption(click.core.Option):
 
     @staticmethod
     def get_timeout_hours(match_result):
+        """get_timeout_hours"""
         res = 0
 
         extract_days_str = match_result.group(1)
@@ -41,6 +44,7 @@ class TimeoutOption(click.core.Option):
 
         return res
 
+    # pylint: disable=W0613
     def timeout_callback(self, ctx, param, value):
         """
         timeout参数click回调方法

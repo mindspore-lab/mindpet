@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""Set up"""
 from distutils.core import setup
 from setuptools import find_packages
 
@@ -50,7 +51,7 @@ def do_setup(packages_data):
         package_data=packages_data,
         entry_points={
             'console_scripts': [
-                'tk = tk.tk_main:cli_wrapper'
+                'mindpet = mindpet.mindpet_main:cli_wrapper'
             ],
         },
         cmdclass=cmd_class
@@ -59,7 +60,7 @@ def do_setup(packages_data):
 
 if __name__ == '__main__':
     package_data = {
-        'tk': [
+        'mindpet': [
             '*.py',
             '*/*.py',
             '*/*/*.py',

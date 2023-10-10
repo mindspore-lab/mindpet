@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved."""
 
 from mindpet.security.param_check.base_check import BaseCheckParam, BaseCheck
 from mindpet.security.param_check.option_check_utils import PathExistCheck, LinkPathCheck, get_real_path
 
 
 class ResultFileCheckParam(BaseCheckParam):
+    """ResultFileCheckParam class"""
     def __init__(self,
                  path_content_check_param,
                  mode,
@@ -24,15 +25,9 @@ class ResultFileCheckParam(BaseCheckParam):
         self.path_content_check_param = path_content_check_param
 
 
+# pylint: disable=W0246
 class ResultFileCheck(BaseCheck):
-    def __init__(self, option_name, option_value):
-        """
-        任务结果文件(eval_result.json/infer_result.json)合法性校验构造方法
-        :param option_name: 参数名称
-        :param option_value: 参数值
-        """
-        super().__init__(option_name, option_value)
-
+    """ResultFileCheck class"""
     def check(self, check_param):
         """
         任务结果文件(eval_result.json/infer_result.json)合法性校验

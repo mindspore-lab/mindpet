@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2010-2022. All rights reserved.
-
+import sys
+sys.path.append('.')
 import os
 import logging
 import unittest
@@ -180,24 +181,24 @@ class TestLoRADense(unittest.TestCase):
         self.assertEqual(2, lora.lora_rank)
         logging.info("Finish test_params_with_legal_lora_rank")
 
-    def test_params_with_legal_tk_delta_lora_a(self):
-        logging.info('Start test_params_with_legal_tk_delta_lora_a')
+    def test_params_with_legal_mindpet_delta_lora_a(self):
+        logging.info('Start test_params_with_legal_mindpet_delta_lora_a')
         lora = LoRADense(in_channels=1, out_channels=1, lora_rank=2, lora_alpha=4, lora_dropout=0.9,
                          lora_a_init=Tensor(shape=(2, 1), dtype=mstype.int8, init=One()))
-        target = Tensor([[1], [1]]).asnumpy() == lora.tk_delta_lora_a.asnumpy()
+        target = Tensor([[1], [1]]).asnumpy() == lora.mindpet_delta_lora_a.asnumpy()
         for result in target:
             self.assertTrue(result)
-        logging.info("Finish test_params_with_legal_tk_delta_lora_a")
+        logging.info("Finish test_params_with_legal_mindpet_delta_lora_a")
 
-    def test_params_with_legal_tk_delta_lora_b(self):
-        logging.info('Start test_params_with_legal_tk_delta_lora_b')
+    def test_params_with_legal_mindpet_delta_lora_b(self):
+        logging.info('Start test_params_with_legal_mindpet_delta_lora_b')
         lora = LoRADense(in_channels=3, out_channels=2, lora_rank=3, lora_alpha=4, lora_dropout=0.9,
                          lora_b_init=Tensor(shape=(2, 3), dtype=mstype.int8, init=One()))
-        target = Tensor([[1, 1, 1], [1, 1, 1]]).asnumpy() == lora.tk_delta_lora_b.asnumpy()
+        target = Tensor([[1, 1, 1], [1, 1, 1]]).asnumpy() == lora.mindpet_delta_lora_b.asnumpy()
         for _ in target:
             for result in _:
                 self.assertTrue(result)
-        logging.info("Finish test_params_with_legal_tk_delta_lora_b")
+        logging.info("Finish test_params_with_legal_mindpet_delta_lora_b")
 
     # construct
     def test_construct_with_has_bias(self):

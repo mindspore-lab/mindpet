@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
-
+import sys
+sys.path.append('.')
 import os
 import logging
 import shutil
@@ -52,7 +53,7 @@ class TestTaskUtils(unittest.TestCase):
 
         output_path = os.path.join('/', 'tmp', 'task_utils', 'outputs')
 
-        duplicate_output_full_path = os.path.join(output_path, 'TK_UUID1')
+        duplicate_output_full_path = os.path.join(output_path, 'MINDPET_UUID1')
         if not os.path.exists(duplicate_output_full_path):
             os.makedirs(duplicate_output_full_path)
 
@@ -88,7 +89,7 @@ class TestTaskUtils(unittest.TestCase):
 
         logging.info('Finish test_create_output_path_subdir_with_uuid_when_makedirs_throw_exception.')
 
-    @mock.patch('tk.utils.task_utils.ModelConfigKeysInfoError')
+    @mock.patch('mindpet.utils.task_utils.ModelConfigKeysInfoError')
     def test_model_config_keys_check_item_throw_attribute_error(self, mock_func):
         """
         测试model_config配置信息中的首层key名称合法性时， 出现content为None触发AttributeError的问题

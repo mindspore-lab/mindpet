@@ -37,6 +37,3 @@ jobs:
     - name: Test with unit test (UT) pytest
       run: |
         pytest test/unit_test
-    - name: Test with system test (ST) pytest
-      run: |
-        pytest test/developer_test

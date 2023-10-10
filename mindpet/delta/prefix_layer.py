@@ -62,9 +62,9 @@ class PrefixLayer(nn.Cell):
     def __define_network(self) -> None:
         """the network structure of prefix"""
         self.input_tokens = ms.Parameter(ms.numpy.arange(0, self.prefix_token_num, 1),
-                                                name="tk_delta_prefixtuning_input_tokens", requires_grad=False)
-        self.tk_delta_prefixtuning_wte = nn.Embedding(self.prefix_token_num, self.embed_dim)
-        self.tk_delta_prefixtuning_control_trans = nn.SequentialCell(
+                                                name="mindpet_delta_prefixtuning_input_tokens", requires_grad=False)
+        self.mindpet_delta_prefixtuning_wte = nn.Embedding(self.prefix_token_num, self.embed_dim)
+        self.mindpet_delta_prefixtuning_control_trans = nn.SequentialCell(
             nn.Dense(self.embed_dim, self.mid_dim),
             nn.Tanh(),
             nn.Dense(self.mid_dim, self.hidden_dim)
@@ -73,8 +73,8 @@ class PrefixLayer(nn.Cell):
     def __allocate_parameter(self):
         """the value of prefix matrix"""
         input_tokens = self.input_tokens
-        temp_control = self.tk_delta_prefixtuning_wte(input_tokens)
-        past_key_values = self.tk_delta_prefixtuning_control_trans(temp_control)
+        temp_control = self.mindpet_delta_prefixtuning_wte(input_tokens)
+        past_key_values = self.mindpet_delta_prefixtuning_control_trans(temp_control)
         seq_len, _ = past_key_values.shape
         past_key_values = past_key_values.view(seq_len, -1, self.hidden_dim)
         past_key_values = self.dropout(past_key_values)

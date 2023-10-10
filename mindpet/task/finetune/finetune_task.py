@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+"""Copyright © Huawei Technologies Co., Ltd. 2022-2023. All rights reserved."""
 
 import os
 import subprocess
@@ -15,6 +15,7 @@ from mindpet.utils.task_utils import create_output_path_subdir_with_uuid, model_
 
 
 class FinetuneTask:
+    """FinetuneTask class"""
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
@@ -31,6 +32,7 @@ class FinetuneTask:
             record_operation_and_service_error_log('Finetune failed.')
             raise ex
 
+    # pylint: disable=R1732
     def start(self):
         """
         启动命令
@@ -47,8 +49,8 @@ class FinetuneTask:
             raise ex
         except Exception as ex:
             if ex is None or not str(ex):
-                raise CreateProcessError(f'Exception occurred when creating finetune task process, '
-                                         f'no error message available.') from ex
+                raise CreateProcessError('Exception occurred when creating finetune task process, '
+                                         'no error message available.') from ex
             raise CreateProcessError(f'Exception occurred when creating finetune task process, '
                                      f'error message: {str(ex)}.') from ex
 
@@ -61,10 +63,10 @@ class FinetuneTask:
             raise ex
         except Exception as ex:
             if ex is None or not str(ex):
-                raise MonitorProcessRspError(f'Exception occurred when monitoring finetune task process, '
-                                             f'no error message available.') from ex
-            raise MonitorProcessRspError(f'Exception occurred when monitoring finetune task process, '
-                                         f'error message: {str(ex)}.') from ex
+                raise MonitorProcessRspError('Exception occurred when monitoring finetune task process, '
+                                             'no error message available.') from ex
+            raise MonitorProcessRspError('Exception occurred when monitoring finetune task process, '
+                                         'error message: {str(ex)}.') from ex
 
         if rsp_code != 0:
             operation_logger_without_std.error('Finetune failed.')

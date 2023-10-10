@@ -84,7 +84,7 @@ function install_dependence() {
 function run_dt_test_cases() {
   info "Start getting testcase final result."
 
-  pytest -v --junit-xml=./final.xml --cov=tk --cov-report=html --cov-report=xml --disable-pytest-warnings \
+  pytest -v --junit-xml=./final.xml --cov=mindpet --cov-report=html --cov-report=xml --disable-pytest-warnings \
     --cov-branch --cache-clear
 
   mv .coverage coverage.xml final.xml htmlcov result

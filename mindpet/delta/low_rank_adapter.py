@@ -7,7 +7,6 @@ import mindspore.common.dtype as mstype
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.parameter import Parameter
 from mindspore import Tensor
-from mindspore.nn.layer.activation import get_activation, _activation
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 try:
@@ -17,7 +16,7 @@ except ImportError:
     import mindspore._checkparam as Validator
     from mindformers.modules.layers import _args_type_validator_check, _valid_value_checks
 from mindpet.delta.delta_constants import VALID_TENSOR_DATATYPE
-
+from mindpet.utils.version_control import get_activation, _activation
 
 class LowRankLinear(nn.Cell):
     """

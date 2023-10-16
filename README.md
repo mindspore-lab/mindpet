@@ -14,7 +14,7 @@ MindPet（Pet：Parameter-Efficient Tuning）是属于Mindspore领域的微调�
 - Python 3.7至3.9版本
 - MindSpore >= 1.8
 
- 
+
 
 ### 2.2 软件安装
 
@@ -51,6 +51,7 @@ pip uninstall mindpet
 | LowRankAdapter | Compacter: Efficient low-rank hypercom plex adapter layers  | [MindPet_DeltaAlgorithm_README](doc/MindPet_DeltaAlgorithm_README.md) 第四章 |
 | BitFit         | BitFit: Simple Parameter-efficient Fine-tuning for Transformer-based Masked Language-models | [MindPet_DeltaAlgorithm_README](doc/MindPet_DeltaAlgorithm_README.md) 第五章 |
 | R_Drop         | R-Drop: Regularized Dropout for Neural Networks | [MindPet_DeltaAlgorithm_README](doc/MindPet_DeltaAlgorithm_README.md) 第六章 |
+| P-Tuning v2    | P-Tuning v2: Prompt Tuning Can Be Comparable to Fine-tuning Universally Across Scales and Tasks | [MindPet_DeltaAlgorithm_README](doc/MindPet_DeltaAlgorithm_README.md) 第七章 |
 
 
 

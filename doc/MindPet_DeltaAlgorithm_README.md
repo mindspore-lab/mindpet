@@ -14,7 +14,7 @@ LoRA算法是一种针对超大语言模型的轻量化微调算法，通过使�
 
 
 
-### 1.2 API接口 
+### 1.2 API接口
 
 #### LoRADense
 
@@ -23,18 +23,18 @@ class mindpet.delta.lora.LoRADense(in_channels,
                               out_channels, 
                               lora_rank, 
                               lora_alpha,
-                              lora_dropout, 
-                              lora_a_init=HeUniform(negative_slope=math.sqrt(5)), 
-                              lora_b_init='zero', 
-                              param_init_type=mindspore.dtype.float32, 
-                              compute_dtype=mindspore.dtype.float16, 
-                              weight_init='normal', 
-                              bias_init='zeros', 
-                              has_bias=True, 
+                              lora_dropout,
+                              lora_a_init=HeUniform(negative_slope=math.sqrt(5)),
+                              lora_b_init='zero',
+                              param_init_type=mindspore.dtype.float32,
+                              compute_dtype=mindspore.dtype.float16,
+                              weight_init='normal',
+                              bias_init='zeros',
+                              has_bias=True,
                               activation=None)
 ```
 
-添加LoRA结构的全连接层。公式如下：	
+添加LoRA结构的全连接层。公式如下：
 $$
 outputs = activation(X∗weight^{T}+bias+\frac{lora\_alpha}{lora\_rank}\cdot X_{lora\_dropout}∗lora\_a^{T}∗lora\_b^{T})
 $$
@@ -59,7 +59,7 @@ $$
 - **has_bias** (bool) - 是否使用偏置向量 bias 。默认值：True。
 - **activation** (Union[str, Cell, Primitive, None]) - 应用于全连接层输出的激活函数。可指定激活函数名，如`'relu'`，或具体激活函数，如`mindspore.nn.ReLU()`。默认值：None。
 
-  
+
 
 **输入**
 
@@ -93,13 +93,13 @@ shape为 `(∗, out_channels)` 的Tensor 。
 ##### shard
 
 ```python
-shard(strategy_org_dense_matmul=None, 
+shard(strategy_org_dense_matmul=None,
       strategy_org_bias_add=None,
-      strategy_lora_dropout=None, 
-      strategy_lora_a_matmul=None, 
+      strategy_lora_dropout=None,
+      strategy_lora_a_matmul=None,
       strategy_lora_b_matmul=None,
-      strategy_lora_mul=None, 
-      strategy_lora_add=None, 
+      strategy_lora_mul=None,
+      strategy_lora_add=None,
       strategy_activation=None)
 ```
 
@@ -145,12 +145,12 @@ from mindpet.delta import LoRADense
 # replace Dense Layer with LoRADense
 dense1 = LoRADense(in_channels=1*28*28, out_channels=512, lora_rank=8, lora_alpha=16...)
 # if distributed training is required, invoke shard method
-dense1.shard(strategy_org_dense_matmul=((2, 1), (4, 1)), 
+dense1.shard(strategy_org_dense_matmul=((2, 1), (4, 1)),
              strategy_org_bias_add=((2, 4), (4,)),
-             strategy_lora_dropout=((2, 1),), 
-             strategy_lora_a_matmul=((2, 1), (1, 1)), 
+             strategy_lora_dropout=((2, 1),),
+             strategy_lora_a_matmul=((2, 1), (1, 1)),
              strategy_lora_b_matmul=((2, 1), (4, 1)),
-             strategy_lora_mul=((2, 4), ()), 
+             strategy_lora_mul=((2, 4), ()),
              strategy_lora_add=((2, 4), (2, 4)),
              strategy_activation=((2, 4), (2, 4))
 ```
@@ -238,12 +238,12 @@ ckpt_callback = TrainableParamsCheckPoint(...)
 
 ### 2.1 算法介绍
 
-Prefix-Tuning通过在输入序列中加入跟任务相关的向量，只训练这部分任务相关的向量，保持预训练模型的参数不变。Prefix-Tuning会在每个attention的key和value向量中插入l个用于更新参数的prefix向量，然后冻结预训练模型的参数， 只更新这些prefix向量的参数，就可以达到近似全参微调的效果。 
+Prefix-Tuning通过在输入序列中加入跟任务相关的向量，只训练这部分任务相关的向量，保持预训练模型的参数不变。Prefix-Tuning会在每个attention的key和value向量中插入l个用于更新参数的prefix向量，然后冻结预训练模型的参数， 只更新这些prefix向量的参数，就可以达到近似全参微调的效果。
 
 
 算法原理如下图所示，算法具体实现细节可参考论文[Prefix-Tuning: Optimizing Continuous Prompts for Generation](https://aclanthology.org/2021.acl-long.353.pdf)
 
-<center>    <img style="border-radius: 0.3125em;  zoom: 33%;   box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"     
+<center>    <img style="border-radius: 0.3125em;  zoom: 33%;   box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"
 src="image/prefix.png"><br>    <div style="color:orange; border-bottom: 1px solid #d9d9d9;    display: inline-block;    color: #999;    padding: 2px; ">
 Prefix算法原理图: 对于每个下游任务，添加一份和当前任务相关的prefix向量，冻结预训练模型的其他参数，只训练这些prefix向量。
 </div> </center>
@@ -323,12 +323,12 @@ class MaskSelfAttention(nn.Cell):
         self.past_value = self.prefix.past_value_reparam
         # 第三步 定义help矩阵,不同模型，矩阵的shape需要适当修改
         self.help_matrix = Tensor(numpy.ones([self.prefix.batch_size,
-                                              self.prefix.num_heads-1, 
+                                              self.prefix.num_heads-1,
                                               seq_length, seq_length]))
         self.help = Tensor(numpy.ones([self.prefix.batch_size,
-                                       self.prefix.num_heads, seq_length, 
+                                       self.prefix.num_heads, seq_length,
                                        self.prefix.prefix_token_num // self.prefix.batch_size]))
-    
+
     def construct(self, input_tensor, attention_mask):
         ...
         ...
@@ -423,7 +423,7 @@ ckpt_callback = TrainableParamsCheckPoint(...)
 
 ### 3.1 算法介绍
 
-Adapter结构本质是一个bottleneck层，包含降维全连接层（adapter_down_proj）、激活层（adapter_non_linear）、升维全连接层（adapter_up_proj）、以及残差连接。具体来说，对每个Transformer Layer，在多头注意力模块后的Feed-forward Layer以及两个Feed-forward Layer的后面，添加Adapter结构。然后冻结预训练模型的参数， 只更新Adapter结构参数。 
+Adapter结构本质是一个bottleneck层，包含降维全连接层（adapter_down_proj）、激活层（adapter_non_linear）、升维全连接层（adapter_up_proj）、以及残差连接。具体来说，对每个Transformer Layer，在多头注意力模块后的Feed-forward Layer以及两个Feed-forward Layer的后面，添加Adapter结构。然后冻结预训练模型的参数， 只更新Adapter结构参数。
 
 实验结果表明，添加了Adapter结构的Transformer模型，在仅训练少数参数情况下，微调后精度近似全参微调。
 
@@ -441,12 +441,12 @@ Adapter结构本质是一个bottleneck层，包含降维全连接层（adapter_d
 class mindpet.delta.adapter.AdapterDense(in_channels, 
                                     out_channels, 
                                     weight_init='normal',
-                                    bias_init='zeros', 
-                                    has_bias=True, 
-                                    activation=None, 
-                                    bottleneck_size=64, 
-                                    non_linearity='gelu', 
-                                    param_init_type=mindspore.dtype.float32, 
+                                    bias_init='zeros',
+                                    has_bias=True,
+                                    activation=None,
+                                    bottleneck_size=64,
+                                    non_linearity='gelu',
+                                    param_init_type=mindspore.dtype.float32,
                                     compute_dtype=mindspore.dtype.float16)
 ```
 
@@ -708,10 +708,10 @@ from mindpet.delta import AdapterLayer
  
 # original Dense Layer
 dense = nn.Dense(in_channels=1*28*28, out_channels=512,...)
- 
+
 # insert into Adapter Layer with AdapterLayer
 adapter_layer = AdapterLayer(hidden_size=512, bottleneck_size=64...)
- 
+
 # if distributed training is required, invoke shard method
 # set origin dense shard method here
 # set AdapterLayer shard method below
@@ -857,18 +857,18 @@ $$
 
 * **in_channels** (int) - LowRankAdapterDense层输入Tensor的空间维度。
 * **out_channels** (int) - LowRankAdapterDense层输出Tensor的空间维度。
-* **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 
+* **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) -
         LowRankAdapterDense中全连接层权重参数的初始化方法。它的类型可以是Tensor，str，Initializer或numbers.Number。
         当使用str时，值引用自类initializer；更多细节请参考Initializer的值。当使用Tensor时，数据类型与输入Tensor相同。
         默认值："normal"。
-* **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 
+* **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) -
         LowRankAdapterDense中全连接层偏置参数的初始化方法。
         它的类型可以是Tensor，str，Initializer或numbers.Number。当使用str时，值引用自类initializer；更多细节请参考Initializer的值。当使用Tensor时，数据类型与输入Tensor相同。默认值："zeros"。
 * **has_bias** (bool) - LowRankAdapterDense全连接层是否有偏置。
 * **activation** (Union[str, Cell, Primitive, None]) - LowRankAdapterDense中全连接层激活函数。可指定激活函数名，如’relu’，或具体激活函数，如mindspore.nn.ReLU()。默认值：None。
 * **reduction_factor** (int) - Low-Rank Adapter结构向下投影的维度值缩减倍数。如计算得bottleneck_dim = hidden_size//reduction_factor，bottleneck_dim即为向下投影的维度值。默认值为1。
 * **low_rank_size** (int) - Low-Rank Adapter结构中，向下/向上投影的矩阵再次低秩分解的秩值。默认值为1。
-* **low_rank_w_init** (Union[str, Initializer]) - 
+* **low_rank_w_init** (Union[str, Initializer]) -
         Low-Rank Adapter结构向下或向上投影的权重参数的初始化方法。它可以是str或Initializer。
         当使用str时，值引用自类initializer；更多细节请参考Initializer的值。
         默认值："xavier_uniform"。
@@ -989,7 +989,7 @@ $$
         如计算得bottleneck_dim = hidden_size//reduction_factor，bottleneck_dim即为向下投影的维度值。
          默认值为1。
 * **low_rank_size** (int): LowRankAdapter模块中'内层'bottleneck的隐藏大小。
-* **low_rank_w_init** (Union[str, Initializer]) - 
+* **low_rank_w_init** (Union[str, Initializer]) -
         Low-Rank Adapter结构向下或向上投影的权重参数的初始化方法。它可以是str或Initializer。
         当使用str时，值引用自类initializer；更多细节请参考Initializer的值。
         默认值："xavier_uniform"。
@@ -1344,12 +1344,12 @@ ckpt_callback = TrainableParamsCheckPoint(...)
 R_Drop算法是一种用于提升精度的微调算法，使用“进行两次dropout”的思想，增加随机扰动，提高模型的精度。
 具体做法为在模型加载完一个batch的数据集之后，对一个batch中的输入数据进行复制，计算出logits并输入到loss计算函数中；在loss计算函数中，分别计算ce_loss和kl_loss，最终按照loss = ce_loss + kl_loss * alpha 的形式返回loss值（alpha为超参）。
 
-实验结果表明，R_Drop算法能够有效提高模型的精度。 
+实验结果表明，R_Drop算法能够有效提高模型的精度。
 算法具体细节可参考相关论文[R-Drop: Regularized Dropout for Neural Networks](https://arxiv.org/abs/2106.14448)。
 
 
 
-### 6.2 API接口 
+### 6.2 API接口
 
 #### RDropLoss
 ```python
@@ -1396,11 +1396,11 @@ class BertClsModel(BaseModel):
         ...
         # origin self.loss
         # self.loss = CrossEntropyLoss()
-        
+
         #replace CrossEntropyLoss with RDropLoss
         self.loss = RDropLoss()
         ...
-    
+
     def construct(self, input_ids, input_mask, token_type_id, label_ids):
         # repeat the input
         input_ids, input_mask, token_type_id, label_ids = rdrop_repeat(input_ids, input_mask, token_type_id,
@@ -1456,6 +1456,199 @@ class BertClsModel(BaseModel):
     <td class="tg-rcip">1195MB</td>
     <td class="tg-rcip">117.668 ms</td>
     <td class="tg-rcip">0.6211</td>
+  </tr>
+</tbody>
+</table>
+
+
+
+## 七、P-Tuning v2算法
+
+### 7.1 算法介绍
+
+P-Tuning v2该方法将可训练的连续提示向量独立添加到每个transformer层的输入中，只训练这部分任务相关的向量，保持预训练模型的参数不变。P-Tuning v2会在每个transformer层的key和value向量的前面插入l个用于更新参数的连续提示向量，然后冻结预训练模型的参数， 只更新这些向量的参数，就可以达到近似全参微调的效果。
+
+
+算法原理如下图所示，算法具体实现细节可参考论文[P-Tuning v2: Prompt Tuning Can Be Comparable to Fine-tuning Universally Across Scales and Tasks](https://arxiv.org/abs/2110.07602)
+
+<center>    <img style="border-radius: 0.3125em;  zoom: 50%;   box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);"
+src="image/ptuning2.png"><br>    <div style="color:orange; border-bottom: 1px solid #d9d9d9;    display: inline-block;    color: #999;    padding: 2px; ">
+P-Tuning v2算法原理图: 对于每个下游任务，在网络的每一层添加一份连续提示向量，冻结预训练模型的其他参数，只训练这些向量。
+</div> </center>
+
+
+
+### 7.2 API接口
+
+``` python
+ class PrefixEncoder(pre_seq_len,
+                     num_layers,
+                     num_heads,
+                     kv_channels,
+                     prefix_projection,
+                     projection_dim,
+                     dropout_prob):
+```
+
+定义PrefixEncoder层
+
+
+
+**参数**
+
+- **pre_seq_len**(int) - 网络每层提示向量的长度.
+- **num_layers**(int) - 网络层数，与原模型参数一致。
+- **num_heads**(int) - 多头注意力头数，与原模型参数一致。
+- **kv_channels**(int) - `key`、`value`隐藏维度，与原模型参数一致。
+- **prefix_projection**(bool) - 是否使用MLP表征。
+- **projection_dim**(int) - MLP维度。
+- **dropout_prob**(float) - 丢弃率。
+
+
+
+**异常**
+
+- **TypeError** - `pre_seq_len`不是正整数。
+- **TypeError** - `num_layers`不是正整数。
+- **TypeError** - `num_heads`不是正整数。
+- **TypeError** - `kv_channels`不是正整数。
+- **TypeError** - `projection_dim`不是正整数。
+- **ValueError** - `dropout_prob`不在[0,1)之内。
+
+
+
+### 7.3 使用样例
+
+通过以下步骤将模型结构中`key`、`value`和`attention_mask`修改为新的`key`、`value`和`attention_mask`，冻结网络进行训练：
+
+1）安装mindpet工具包。（[安装方法参考《README.md》第二章](../README.md)）
+
+2）在模型的初始化时，从工具包中引入`PrefixEncoder`类，创建`prefixEncoder`，在`construct`时构造提示向量传递给网络的每层。
+
+```python
+class ChatModelWithPt2(ChatModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.prefix_encoder = PrefixEncoder(
+            config.pet_config.pre_seq_len,
+            config.pet_config.num_layers,
+            config.pet_config.num_heads,
+            config.pet_config.kv_channels,
+            config.pet_config.prefix_projection,
+            config.pet_config.projection_dim,
+            config.pet_config.dropout_prob
+        )
+        ...
+
+    def construct(self, ...):
+        prefix_key_values = self.prefix_encoder(batch_size)
+        return super().construct(..., prefix_key_values)
+```
+
+3）在模型的Attention结构中，将`prefixlayer`构造的每层`prefix_key_value`矩阵与原`key`、`value`矩阵进行`concat`操作。然后定义全为1的`help`矩阵，将原`attention_mask`矩阵与`help`矩阵进行`concat`（新的`attention_mask`矩阵shape与新的`query`*`key`矩阵的shape相同）。
+
+```python
+#模型的Attention层
+class SelfAttention(nn.Cell):
+   def add_prefix(prefix_key_value, pre_seq_len, key, value, attention_mask):
+        # [bs, num_heads, seq_length, head_dim]
+        seq_len = key.shape[2]
+
+        # [bs, num_heads, pre_seq_len, head_dim]
+        prefix_key = prefix_key_value[0]
+        prefix_value = prefix_key_value[1]
+        cat = P.Concat(2)
+        key = cat([prefix_key, key])
+        value = cat([prefix_value, value])
+
+        batch_size = attention_mask.shape[0]
+        prefix_mask = attention_mask.new_ones((batch_size, 1, seq_len, pre_seq_len))
+        m_cat = P.Concat(3)
+
+        # [bs, 1, seq_len, pre_seq_len + seq_len]
+        attention_mask = m_cat((prefix_mask, attention_mask))
+
+        return key, value, attention_mask
+
+    def construct(self, input_tensor, attention_mask):
+        ...
+        ...
+        key_layer, value_layer, attention_mask = self.add_prefix(
+            prefix_key_value,
+            self.pre_seq_len,
+            key_layer,
+            value_layer,
+            attention_mask
+        )
+        context_layer = self.attention(query_layer, key_layer, value_layer, attention_mask)
+        ...
+```
+
+4）在训练脚本中，从工具包中引入`freeze_delta`方法，定义优化器之前调用`freeze_delta`冻结除`Prefix`矩阵外其它原模型权重。注意，为了适配下游任务引入的额外模型结构无需冻结，可以用`exclude`参数指定无需冻结的结构名称。（[冻结方法参考《MindPet_GraphOperation_README.md》第一章](MindPet_GraphOperation_README.md)）
+
+```Python
+# freeze all cell except ptuning2
+freeze_delta(model=network, mode='ptuning2')
+```
+
+然后从工具包中引入`TrainableParamsCheckPoint`类，将保存ckpt的类改为`TrainableParamsCheckPoint`，仅保存需要更新的参数，可节约存储空间。（[详细方法参考《MindPet_GraphOperation_README.md》第二章](MindPet_GraphOperation_README.md)）
+
+由于微调后只保存了部分参数，推理时具体如何加载ckpt请参考[附录A](###A 分布式微调后模型评估方法)。
+
+```python
+# original callback
+# ckpt_callback = ModelCheckpoint(...)
+
+# replace ModelCheckpoint with TrainableParamsCheckPoint
+ckpt_callback = TrainableParamsCheckPoint(...)
+```
+
+
+
+### 7.4 实验效果
+
+下面实验基于MindFormers开源仓中的[**GLM2-6B**](https://gitee.com/mindspore/mindformers/blob/dev/docs/model_cards/glm2.md)复现。
+
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-54sw" rowspan="2">模型</th>
+    <th class="tg-54sw" rowspan="2">下游任务</th>
+    <th class="tg-54sw" rowspan="2">模式</th>
+    <th class="tg-54sw" colspan="4">训练参数</th>
+    <th class="tg-54sw" rowspan="2">微调参数占比</th>
+    <th class="tg-54sw" rowspan="2">静态内存+动态内存</th>
+    <th class="tg-54sw" rowspan="2">rouge-1</th>
+  </tr>
+  <tr>
+    <th class="tg-54sw">epoch</th>
+    <th class="tg-54sw">优化器</th>
+    <th class="tg-54sw">学习率</th>
+    <th class="tg-54sw">pre_seq_num</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-rcip" rowspan="2">glm2-6m</td>
+    <td class="tg-rcip" rowspan="2">language modeling</td>
+    <td class="tg-rcip">baseline</td>
+    <td class="tg-rcip">1</td>
+    <td class="tg-rcip">Adamw</td>
+    <td class="tg-0ys1">1.00E-04</td>
+    <td class="tg-rcip">\</td>
+    <td class="tg-rcip">100%</td>
+    <td class="tg-rcip">60056MB+92141MB</td>
+    <td class="tg-rcip">30.7</td>
+  </tr>
+  <tr>
+    <td class="tg-rcip">p-tuning v2</td>
+    <td class="tg-rcip">1</td>
+    <td class="tg-rcip">Adamw</td>
+    <td class="tg-0ys1">5.00E-03</td>
+    <td class="tg-rcip">128</td>
+    <td class="tg-rcip">0.03%</td>
+    <td class="tg-rcip">12992MB+35588MB</td>
+    <td class="tg-rcip">31.5</td>
   </tr>
 </tbody>
 </table>

@@ -5,6 +5,16 @@
 import mindspore as ms
 from mindspore import nn
 from .version_utils import is_version_ge
+if is_version_ge(ms.__version__, '2.0.0'):
+    from ..layers.activation import get_activation, _activation
+else:
+    from mindspore.nn.layer.activation import get_activation, _activation
+
+# pylint: disable=W0127
+_activation = _activation
+# pylint: disable=W0127
+get_activation = get_activation
+
 
 def get_dropout(dropout_prob):
     if is_version_ge(ms.__version__, '1.11.0'):

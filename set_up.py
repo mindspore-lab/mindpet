@@ -12,7 +12,7 @@ cmd_class = {}
 
 
 def get_version():
-    version = '1.0.2'
+    version = '1.0.3'
     return version
 
 

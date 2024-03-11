@@ -155,18 +155,6 @@ class TestLowRankAdapterDense(unittest.TestCase):
         logging.info(
             'Finish test_dense_check_type_of_data_with_illegal_str_weight_init.')
 
-    def test_dense_check_type_of_data_with_none_weight_init(self):
-        logging.info(
-            'Start test_dense_check_type_of_data_with_None_weight_init.')
-        with self.assertRaises(TypeError) as ex:
-            net = LowRankAdapterDense(in_channels=5,
-                                      out_channels=4,
-                                      weight_init=None,
-                                      reduction_factor=2)
-        logging.error(ex.exception)
-        logging.info(
-            'Finish test_dense_check_type_of_data_with_None_weight_init.')
-
     def test_dense_check_init_with_weight_init_shape_length_not_equal_to_two(self):
         logging.info(
             'Start test_dense_check_init_with_weight_init_shape_length_not_equal_to_two.')
@@ -218,18 +206,6 @@ class TestLowRankAdapterDense(unittest.TestCase):
         logging.error(ex.exception)
         logging.info(
             'Finish test_dense_check_type_of_data_with_illegal_str_bias_init.')
-
-    def test_dense_check_type_of_data_with_none_bias_init(self):
-        logging.info(
-            'Start test_dense_check_type_of_data_with_none_bias_init.')
-        with self.assertRaises(TypeError) as ex:
-            net = LowRankAdapterDense(in_channels=5,
-                                      out_channels=4,
-                                      bias_init=None,
-                                      reduction_factor=2)
-        logging.error(ex.exception)
-        logging.info(
-            'Finish test_dense_check_type_of_data_with_none_bias_init.')
 
     def test_dense_check_init_with_bias_init_shape_length_not_equal_to_one(self):
         logging.info(

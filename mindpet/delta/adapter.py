@@ -8,6 +8,8 @@ from mindspore import nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.nn.cell import Cell
+from mindspore.ops.primitive import Primitive
 try:
     from mindspore.nn.transformer.layers import _Linear, _args_type_validator_check, _valid_value_checks
     from mindspore._checkparam import Validator
@@ -206,6 +208,13 @@ class AdapterDense(nn.Dense):
         self.compt_dtype = compute_dtype
         self.cast = P.Cast()
         self.act_name = activation
+
+        self.activation = get_activation(activation) if isinstance(
+            activation, str) else activation
+        if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
+            raise TypeError(f"For '{self.cls_name}', the 'activation' must be str or Cell or Primitive, but got "
+                            f"{type(activation).__name__}.")
+        self.activation_flag = self.activation is not None
 
     def construct(self, input_tensor):
         """Foward"""

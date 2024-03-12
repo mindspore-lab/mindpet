@@ -23,6 +23,12 @@ from mindpet.delta.delta_constants import VALID_TENSOR_DATATYPE
 from mindpet.utils.version_control import get_dropout, get_activation
 from mindpet.layers.activation import LeakyReLU, LogSigmoid, LogSoftmax
 
+def check_dense_input_shape(x, prim_name=None):
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    if len(x) < 2:
+        raise ValueError(f"{msg_prefix} dimension of 'x' should not be less than 2, but got {len(x)}.")
+
+
 class LoRADense(nn.Dense):
     """Define a dense layer with LoRA structure.
 
@@ -96,7 +102,7 @@ class LoRADense(nn.Dense):
 
         # Shape operations
         x_shape = self.shape_op(input_tensor)
-        nn.layer.basic.check_dense_input_shape(x_shape, self.cls_name)
+        check_dense_input_shape(x_shape, self.cls_name)
         input_tensor = self.reshape(input_tensor, (-1, x_shape[-1]))
 
         # Dense result

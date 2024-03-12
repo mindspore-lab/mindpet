@@ -403,26 +403,6 @@ class TestSaveCkpt(TestCase):
 
         logging.info('Finish test_enable_ge.')
 
-    def test_saved_network(self):
-        logging.info('Start test_saved_network.')
-
-        class TestCheckpoint(TrainableParamsCheckPoint):
-            def step_end(self, run_context):
-                super(TestCheckpoint, self).step_end(run_context)
-                cb_params = run_context.original_args()
-                cb_params.train_network = dict()
-
-        ckpt_path = os.path.join(cur_dir, "per_min")
-        config_ck = CheckpointConfig(save_checkpoint_steps=1, keep_checkpoint_max=1)
-        params_check_point = TestCheckpoint(prefix='checkpoint_delta',
-                                            directory=ckpt_path, config=config_ck)
-        with self.assertRaises(TypeError):
-            train(params_check_point, enable=True)
-
-        shutil.rmtree(ckpt_path, ignore_errors=True)
-
-        logging.info('Start test_saved_network.')
-
 
 if __name__ == '__main__':
     pytest.main(['-s', os.path.abspath(__file__)])

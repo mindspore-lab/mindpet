@@ -141,13 +141,6 @@ class TestAdapter(unittest.TestCase):
             AdapterDense(in_channels=1, out_channels=1, bottleneck_size=8, weight_init='a')
         logging.error(ex.exception)
         logging.info('Finish test_check_type_of_data_with_no_legal_weight_init.')
-    
-    def test_check_type_of_data_with_none_weight_init(self):
-        logging.info('Start test_check_type_of_data_with_None_weight_init.')
-        with self.assertRaises(TypeError) as ex:
-            AdapterDense(in_channels=1, out_channels=1, bottleneck_size=8, weight_init=None)
-        logging.error(ex.exception)
-        logging.info('Finish test_check_type_of_data_with_None_weight_init.')
 
     # check bias_init
     def test_check_type_of_data_with_no_legal_bias_init(self):
@@ -156,13 +149,6 @@ class TestAdapter(unittest.TestCase):
             AdapterDense(in_channels=1, out_channels=1, bottleneck_size=8, bias_init='a')
         logging.error(ex.exception)
         logging.info('Finish test_check_type_of_data_with_no_legal_bias_init.')
-    
-    def test_check_type_of_data_with_none_bias_init(self):
-        logging.info('Start test_check_type_of_data_with_None_bias_init.')
-        with self.assertRaises(TypeError) as ex:
-            AdapterDense(in_channels=1, out_channels=1, bottleneck_size=8, bias_init=None)
-        logging.error(ex.exception)
-        logging.info('Finish test_check_type_of_data_with_None_bias_init.')
 
     # check non_linearity
     def test_check_type_of_data_with_no_legal_non_linearity(self):

@@ -17,9 +17,11 @@ except ImportError:
     import mindspore._checkparam as Validator
     INC_LEFT = Validator.INC_LEFT
 from mindspore.common.initializer import initializer, HeUniform
+from mindspore.nn.cell import Cell
+from mindspore.ops.primitive import Primitive
 from mindpet.delta.delta_constants import VALID_TENSOR_DATATYPE
-from mindpet.utils.version_control import get_dropout
-
+from mindpet.utils.version_control import get_dropout, get_activation
+from mindpet.layers.activation import LeakyReLU, LogSigmoid, LogSoftmax
 
 class LoRADense(nn.Dense):
     """Define a dense layer with LoRA structure.
@@ -73,6 +75,14 @@ class LoRADense(nn.Dense):
         self.dtype = compute_dtype
         self.lora_a_matmul = P.MatMul(transpose_b=True)
         self.lora_b_matmul = P.MatMul(transpose_b=True)
+
+        activation = kwargs.pop("activation", None)
+        self.activation = get_activation(activation) if isinstance(
+            activation, str) else activation
+        if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
+            raise TypeError(f"For '{self.cls_name}', the 'activation' must be str or Cell or Primitive, but got "
+                            f"{type(activation).__name__}.")
+        self.activation_flag = self.activation is not None
 
     def construct(self, input_tensor):
         """Foward"""
@@ -150,15 +160,15 @@ class LoRADense(nn.Dense):
             self.add.shard(strategy_lora_add)
 
             if self.activation_flag:
-                if isinstance(self.activation, nn.LeakyReLU):
+                if isinstance(self.activation, LeakyReLU):
                     self.activation.select_op.shard((strategy_activation[0], strategy_activation[0]))
-                elif isinstance(self.activation, nn.LogSigmoid):
+                elif isinstance(self.activation, LogSigmoid):
                     self.activation.mul.shard((strategy_activation[0], ()))
                     self.activation.exp.shard(strategy_activation)
                     self.activation.add.shard((strategy_activation[0], ()))
                     self.activation.rec.shard(strategy_activation)
                     self.activation.log.shard(strategy_activation)
-                elif isinstance(self.activation, nn.LogSoftmax):
+                elif isinstance(self.activation, LogSoftmax):
                     raise ValueError("The 'LogSoftmax' function is not supported in semi auto parallel "
                                      "or auto parallel mode.")
                 else:
